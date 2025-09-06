@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "./types";  // Ajuste o caminho se necessário
+import { RootStackParamList } from "./types"; // Ajuste o caminho se necessário
 
 type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
@@ -17,7 +24,14 @@ export default function Login() {
       Alert.alert("Erro", "Por favor, preencha email e senha.");
       return;
     }
-    Alert.alert("Sucesso", "Login realizado!");
+
+    // Simula login bem-sucedido com alerta e navegação
+    Alert.alert("Sucesso", "Login realizado!", [
+      {
+        text: "OK",
+        onPress: () => navigation.navigate("TelaPrincipal"),
+      },
+    ]);
   };
 
   return (

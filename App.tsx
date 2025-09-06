@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BemVindo from "./BemVindo";
 import Cadastro from "./Cadastro";
 import Login from "./Login";
+import TelaPrincipal from "./TelaPrincipal"; // ajuste o caminho se necessário
+
 import { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -16,6 +18,8 @@ export default function App() {
         <Stack.Screen name="BemVindo" component={BemVindo} />
         <Stack.Screen name="Cadastro" component={Cadastro} />
         <Stack.Screen name="Login" component={Login} /> 
+        <Stack.Screen name="TelaPrincipal" component={TelaPrincipal} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
