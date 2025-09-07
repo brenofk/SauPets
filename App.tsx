@@ -8,6 +8,8 @@ import Login from "./Login";
 import TelaPrincipal from "./TelaPrincipal";
 import TelaConfiguracao from "./TelaConfiguracao";
 import TelaCadastroPet from "./TelaCadastroPet";
+import TelaCadastroVacinas from "./TelaCadastroVacinas";
+
 
 import { RootStackParamList } from "./types";
 
@@ -17,14 +19,14 @@ export default function App() {
   return (
     <NavigationContainer>
 
-      <Stack.Navigator initialRouteName="TelaCadastroPet">
+      <Stack.Navigator initialRouteName="TelaCadastroVacinas">
         <Stack.Screen name="BemVindo" component={BemVindo} />
         <Stack.Screen name="Cadastro" component={Cadastro} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="TelaPrincipal" component={TelaPrincipal} />
         <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
         <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
-
+        <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
       </Stack.Navigator>
     </NavigationContainer>
   );
