@@ -7,6 +7,7 @@ import Cadastro from "./Cadastro";
 import Login from "./Login";
 import TelaPrincipal from "./TelaPrincipal";
 import TelaConfiguracao from "./TelaConfiguracao";
+import TelaCadastroPet from "./TelaCadastroPet";
 
 import { RootStackParamList } from "./types";
 
@@ -15,12 +16,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="TelaConfiguracao">
+
+      <Stack.Navigator initialRouteName="TelaCadastroPet">
         <Stack.Screen name="BemVindo" component={BemVindo} />
         <Stack.Screen name="Cadastro" component={Cadastro} />
-        <Stack.Screen name="Login" component={Login} /> 
+        <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="TelaPrincipal" component={TelaPrincipal} />
-       <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
+        <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
+        <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
 
       </Stack.Navigator>
     </NavigationContainer>
