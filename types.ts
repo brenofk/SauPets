@@ -3,4 +3,5 @@ export type RootStackParamList = {
   Cadastro: undefined;
   Login: undefined;
   TelaPrincipal: undefined;
+  TelaConfiguracao: undefined;
 };
