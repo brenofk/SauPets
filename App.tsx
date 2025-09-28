@@ -19,7 +19,7 @@ export default function App() {
   return (
     <NavigationContainer>
 
-      <Stack.Navigator initialRouteName="TelaCadastroVacinas">
+      <Stack.Navigator initialRouteName="BemVindo">
         <Stack.Screen name="BemVindo" component={BemVindo} />
         <Stack.Screen name="Cadastro" component={Cadastro} />
         <Stack.Screen name="Login" component={Login} />
