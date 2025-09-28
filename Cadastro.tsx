@@ -1,174 +1,62 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "./types"; // certifique-se de que o arquivo existe
+// Cadastro.tsx
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from './types';
 
-// 👇 Definindo o tipo corretamente
-type CadastroNavigationProp = NativeStackNavigationProp<RootStackParamList, "Cadastro">;
+type CadastroScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Cadastro'>;
 
-export default function Cadastro() {
-  // 👇 Usando o tipo correto no useNavigation
-  const navigation = useNavigation<CadastroNavigationProp>();
+type Props = { navigation: CadastroScreenNavigationProp };
 
-  const [nome, setNome] = useState("");
-  const [sobrenome, setSobrenome] = useState("");
-  const [numero, setNumero] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmaSenha, setConfirmaSenha] = useState("");
+export default function Cadastro({ navigation }: Props) {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCadastrar = () => {
-    if (
-      !nome.trim() ||
-      !sobrenome.trim() ||
-      !numero.trim() ||
-      !cpf.trim() ||
-      !email.trim() ||
-      !senha.trim() ||
-      !confirmaSenha.trim()
-    ) {
-      Alert.alert("Erro", "Todos os campos são obrigatórios!");
-      return;
+  const handleCadastro = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await new Promise(res => setTimeout(res, 1000));
+      console.log('Cadastro ok', { nome, email, password });
+      navigation.navigate('Login');
+    } catch (err) {
+      setError('Erro ao cadastrar');
+    } finally {
+      setLoading(false);
     }
-
-    if (senha !== confirmaSenha) {
-      Alert.alert("Erro", "As senhas não coincidem!");
-      return;
-    }
-
-    // Aqui você pode colocar a lógica de cadastro, por exemplo, chamar API
-
-    Alert.alert("Sucesso", "Cadastro realizado com sucesso!");
-    navigation.navigate("BemVindo"); // Volta para a tela de boas-vindas
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.label}>Digite o seu nome</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="seu nome..."
-          value={nome}
-          onChangeText={setNome}
-        />
+      <Text style={styles.title}>Cadastro</Text>
 
-        <Text style={styles.label}>Digite o seu sobrenome</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Sobrenome..."
-          value={sobrenome}
-          onChangeText={setSobrenome}
-        />
+      <TextInput style={styles.input} placeholder="Nome" value={nome} onChangeText={setNome} />
+      <TextInput style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <TextInput style={styles.input} placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry />
 
-        <Text style={styles.label}>Digite o seu numero</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="DD 00012-3345"
-          value={numero}
-          onChangeText={setNumero}
-          keyboardType="phone-pad"
-        />
+      {error && <Text style={styles.error}>{error}</Text>}
 
-        <Text style={styles.label}>Digite o seu cpf</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="012.345.666-78"
-          value={cpf}
-          onChangeText={setCpf}
-          keyboardType="numeric"
-        />
+      <TouchableOpacity style={styles.primaryButton} onPress={handleCadastro} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Cadastrar</Text>}
+      </TouchableOpacity>
 
-        <Text style={styles.label}>Digite o seu email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="@gmail.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>Digite sua senha</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="******"
-          value={senha}
-          onChangeText={setSenha}
-          secureTextEntry
-        />
-
-        <Text style={styles.label}>Confirmar senha</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="******"
-          value={confirmaSenha}
-          onChangeText={setConfirmaSenha}
-          secureTextEntry
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleCadastrar}>
-          <Text style={styles.buttonText}>Cadastrar-se</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate("BemVindo")}>
-          <Text style={styles.link}>já possui conta? entre</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.ghostButton} onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.ghostText}>Voltar para login</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#dce6f0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: "#f4f7fa",
-    paddingVertical: 30,
-    paddingHorizontal: 25,
-    borderRadius: 20,
-    width: 300,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-  },
-  label: {
-    fontWeight: "bold",
-    marginBottom: 6,
-    color: "#000",
-  },
-  input: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 5,
-    marginBottom: 15,
-    fontStyle: "italic",
-    color: "#999",
-  },
-  button: {
-    backgroundColor: "#0039d1",
-    paddingVertical: 12,
-    borderRadius: 5,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  link: {
-    textAlign: "center",
-    fontStyle: "italic",
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-    color: "#000",
-  },
+  container: { flex: 1, padding: 20, justifyContent: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
+  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
+  error: { color: 'crimson', marginBottom: 12 },
+  primaryButton: { backgroundColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
+  buttonText: { color: 'white', fontWeight: '600' },
+  ghostButton: { borderWidth: 1, borderColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center' },
+  ghostText: { color: '#0ea5a4', fontWeight: '600' },
 });

@@ -1,126 +1,80 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "./types"; // Ajuste o caminho se necessário
+// Login.tsx
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from './types';
 
-type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
-export default function Login() {
-  const navigation = useNavigation<LoginNavigationProp>();
+type Props = {
+  navigation: LoginScreenNavigationProp;
+};
 
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
+export default function Login({ navigation }: Props) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = () => {
-    if (!email.trim() || !senha.trim()) {
-      Alert.alert("Erro", "Por favor, preencha email e senha.");
-      return;
+  const handleLogin = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      // Aqui você chamaria sua API
+      // Exemplo de delay simulado
+      await new Promise(res => setTimeout(res, 1000));
+      console.log('Login ok', { email, password });
+      navigation.navigate('TelaPrincipal'); // Redireciona para tela principal
+    } catch (err: any) {
+      setError('Erro ao logar');
+    } finally {
+      setLoading(false);
     }
-
-    // Simula login bem-sucedido com alerta e navegação
-    Alert.alert("Sucesso", "Login realizado!", [
-      {
-        text: "OK",
-        onPress: () => navigation.navigate("TelaPrincipal"),
-      },
-    ]);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.label}>Digite o seu email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="@gmail.com"
-          placeholderTextColor="#bbb"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+      <Text style={styles.title}>Entrar</Text>
+      <Text style={styles.subtitle}>Use seu e-mail para entrar no SauPets</Text>
 
-        <Text style={styles.label}>Digite sua senha</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="******"
-          placeholderTextColor="#bbb"
-          secureTextEntry
-          value={senha}
-          onChangeText={setSenha}
-        />
+      <TextInput
+        style={styles.input}
+        placeholder="E-mail"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Entrar</Text>
-        </TouchableOpacity>
+      <TextInput
+        style={styles.input}
+        placeholder="Senha"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
 
-        <TouchableOpacity onPress={() => navigation.navigate("Cadastro")}>
-          <Text style={styles.link}>Não possui conta? Cadastre-se</Text>
-        </TouchableOpacity>
-      </View>
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.ghostButton} onPress={() => navigation.navigate('Cadastro')}>
+        <Text style={styles.ghostText}>Criar conta</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#d7e1f2",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: "#f4f7fa",
-    width: 300,
-    paddingVertical: 30,
-    paddingHorizontal: 25,
-    borderRadius: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 5 },
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  label: {
-    color: "#000",
-    marginBottom: 6,
-    fontWeight: "normal",
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    marginBottom: 20,
-    fontStyle: "italic",
-    color: "#333",
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#0039d1",
-    paddingVertical: 12,
-    borderRadius: 5,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  link: {
-    fontSize: 12,
-    fontStyle: "italic",
-    fontWeight: "bold",
-    color: "#000",
-    textDecorationLine: "underline",
-    textAlign: "center",
-  },
+  container: { flex: 1, padding: 20, justifyContent: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#666', marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
+  error: { color: 'crimson', marginBottom: 12 },
+  primaryButton: { backgroundColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
+  buttonText: { color: 'white', fontWeight: '600' },
+  ghostButton: { borderWidth: 1, borderColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center' },
+  ghostText: { color: '#0ea5a4', fontWeight: '600' },
 });
