@@ -1,80 +1,132 @@
 // Login.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from './types';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Image, 
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
-
-type Props = {
-  navigation: LoginScreenNavigationProp;
-};
-
-export default function Login({ navigation }: Props) {
+export default function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [senha, setSenha] = useState('');
 
-  const handleLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      // Aqui você chamaria sua API
-      // Exemplo de delay simulado
-      await new Promise(res => setTimeout(res, 1000));
-      console.log('Login ok', { email, password });
-      navigation.navigate('TelaPrincipal'); // Redireciona para tela principal
-    } catch (err: any) {
-      setError('Erro ao logar');
-    } finally {
-      setLoading(false);
-    }
+  const handleLogin = () => {
+    console.log('Login:', email, senha);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Entrar</Text>
-      <Text style={styles.subtitle}>Use seu e-mail para entrar no SauPets</Text>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View style={styles.logoContainer}>
+        <Image 
+          source={require('./assets/heart-icon.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.card}>
+        <Text style={styles.title}>Bem-vindo ao SauPets</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#999"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={senha}
+          onChangeText={setSenha}
+        />
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.ghostButton} onPress={() => navigation.navigate('Cadastro')}>
-        <Text style={styles.ghostText}>Criar conta</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity>
+          <Text style={styles.forgotText}>Esqueceu a senha?</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
-  error: { color: 'crimson', marginBottom: 12 },
-  primaryButton: { backgroundColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
-  buttonText: { color: 'white', fontWeight: '600' },
-  ghostButton: { borderWidth: 1, borderColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center' },
-  ghostText: { color: '#0ea5a4', fontWeight: '600' },
+  container: {
+    flex: 1,
+    backgroundColor: '#F6F6F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    marginBottom: 50, // mais espaçamento para parecer igual
+    alignItems: 'center',
+  },
+  logo: {
+    width: 100, // tamanho idêntico ao SauPetV0
+    height: 100,
+  },
+  card: {
+    width: 320, // largura fixa igual ao SauPetV0
+    height: 400, // altura fixa igual ao SauPetV0
+    backgroundColor: '#FFFFFF',
+    borderRadius: 25,
+    paddingVertical: 30,
+    paddingHorizontal: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#333333',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  input: {
+    width: 270, // mesma largura que o SauPetV0
+    height: 50, // mesma altura
+    backgroundColor: '#F2F2F2',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 15,
+    color: '#333',
+  },
+  button: {
+    width: 270,
+    height: 50,
+    backgroundColor: '#4CAF50',
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  forgotText: {
+    marginTop: 20,
+    color: '#4CAF50',
+    fontWeight: '500',
+  },
 });
