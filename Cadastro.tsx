@@ -1,62 +1,161 @@
-// Cadastro.tsx
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 
-type CadastroScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Cadastro'>;
+export default function Cadastro({ navigation }: any) {
+  const [nome, setNome] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [erro, setErro] = useState("");
 
-type Props = { navigation: CadastroScreenNavigationProp };
+  const validarSenha = (senha: string) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{6,}$/;
+    return regex.test(senha);
+  };
 
-export default function Cadastro({ navigation }: Props) {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const handleCadastro = () => {
+    setErro("");
 
-  const handleCadastro = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await new Promise(res => setTimeout(res, 1000));
-      console.log('Cadastro ok', { nome, email, password });
-      navigation.navigate('Login');
-    } catch (err) {
-      setError('Erro ao cadastrar');
-    } finally {
-      setLoading(false);
+    if (!nome || !cpf || !email || !telefone || !senha || !confirmarSenha) {
+      setErro("Todos os campos são obrigatórios.");
+      return;
     }
+
+    if (!validarSenha(senha)) {
+      setErro("A senha deve ter ao menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
+    // ✅ Aqui seria a linha para enviar os dados para o banco
+    // Exemplo: api.post("/register", { nome, cpf, email, telefone, senha });
+
+    alert("Cadastro realizado com sucesso!");
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastro</Text>
+      <Text style={styles.title}>Criar Conta</Text>
+      <Text style={styles.subtitle}>Preencha seus dados para começar</Text>
 
-      <TextInput style={styles.input} placeholder="Nome" value={nome} onChangeText={setNome} />
-      <TextInput style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" />
-      <TextInput style={styles.input} placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput
+        style={styles.input}
+        placeholder="Seu nome completo"
+        value={nome}
+        onChangeText={setNome}
+      />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      <TextInput
+        style={styles.input}
+        placeholder="000.000.000-00"
+        value={cpf}
+        onChangeText={setCpf}
+        keyboardType="numeric"
+      />
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleCadastro} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Cadastrar</Text>}
+      <TextInput
+        style={styles.input}
+        placeholder="seu@email.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="(00) 00000-0000"
+        value={telefone}
+        onChangeText={setTelefone}
+        keyboardType="phone-pad"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Mínimo 6 caracteres"
+        secureTextEntry
+        value={senha}
+        onChangeText={setSenha}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Confirme sua senha"
+        secureTextEntry
+        value={confirmarSenha}
+        onChangeText={setConfirmarSenha}
+      />
+
+      {erro ? <Text style={styles.erro}>{erro}</Text> : null}
+
+      <TouchableOpacity style={styles.button} onPress={handleCadastro}>
+        <Text style={styles.buttonText}>Criar Conta</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.ghostButton} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.ghostText}>Voltar para login</Text>
-      </TouchableOpacity>
+      <Text style={styles.loginText}>
+        Já tem uma conta?{" "}
+        <Text style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
+          Entrar
+        </Text>
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
-  error: { color: 'crimson', marginBottom: 12 },
-  primaryButton: { backgroundColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
-  buttonText: { color: 'white', fontWeight: '600' },
-  ghostButton: { borderWidth: 1, borderColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center' },
-  ghostText: { color: '#0ea5a4', fontWeight: '600' },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#f9fdf9",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  subtitle: {
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#666",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
+  button: {
+    backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  erro: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  loginText: {
+    marginTop: 15,
+    textAlign: "center",
+    color: "#333",
+  },
+  loginLink: {
+    color: "#4CAF50",
+    fontWeight: "bold",
+  },
 });
