@@ -1,64 +1,102 @@
 // Login.tsx
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
   KeyboardAvoidingView,
-  Platform
-} from 'react-native';
+  Platform,
+} from "react-native";
+import Icon from "react-native-vector-icons/Feather"; // Ícones leves
+import { useNavigation } from "@react-navigation/native";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  const navigation = useNavigation();
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
-    console.log('Login:', email, senha);
+    // lógica de login
+    navigation.navigate("TelaPrincipal" as never);
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      {/* Logo */}
       <View style={styles.logoContainer}>
-        <Image 
-          source={require('./assets/heart-icon.png')} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Icon name="heart" size={50} color="#2ecc71" />
+        <Text style={styles.appName}>SauPet</Text>
+        <Text style={styles.subtitle}>Cuidado veterinário na palma da sua mão</Text>
       </View>
 
+      {/* Card de Login */}
       <View style={styles.card}>
-        <Text style={styles.title}>Bem-vindo ao SauPets</Text>
+        <Text style={styles.title}>Entrar</Text>
+        <Text style={styles.description}>
+          Acesse sua conta para cuidar dos seus pets
+        </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-        />
+        {/* Campo Email */}
+        <View style={styles.inputContainer}>
+          <Icon name="mail" size={20} color="#888" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="seu@email.com"
+            placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={senha}
-          onChangeText={setSenha}
-        />
+        {/* Campo Senha */}
+        <View style={styles.inputContainer}>
+          <Icon name="lock" size={20} color="#888" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Sua senha"
+            placeholderTextColor="#aaa"
+            secureTextEntry={!showPassword}
+            value={senha}
+            onChangeText={setSenha}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Icon
+              name={showPassword ? "eye-off" : "eye"}
+              size={20}
+              color="#2ecc71"
+              style={{ marginRight: 8 }}
+            />
+          </TouchableOpacity>
+        </View>
 
+        {/* Esqueci minha senha */}
+        <TouchableOpacity>
+          <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
+        </TouchableOpacity>
+
+        {/* Botão Entrar */}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-        </TouchableOpacity>
+        {/* Link de Cadastro */}
+        <Text style={styles.registerText}>
+          Não tem uma conta?{" "}
+          <Text
+            style={styles.registerLink}
+            onPress={() => navigation.navigate("Cadastro" as never)}
+          >
+            Cadastre-se
+          </Text>
+        </Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -67,66 +105,91 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F6F6',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f9fdf9",
+    justifyContent: "center",
+    padding: 20,
   },
   logoContainer: {
-    marginBottom: 50, // mais espaçamento para parecer igual
-    alignItems: 'center',
+    alignItems: "center",
+    marginBottom: 30,
   },
-  logo: {
-    width: 100, // tamanho idêntico ao SauPetV0
-    height: 100,
-  },
-  card: {
-    width: 320, // largura fixa igual ao SauPetV0
-    height: 400, // altura fixa igual ao SauPetV0
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    paddingVertical: 30,
-    paddingHorizontal: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
-    alignItems: 'center',
-  },
-  title: {
+  appName: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#333333',
-    marginBottom: 25,
-    textAlign: 'center',
-  },
-  input: {
-    width: 270, // mesma largura que o SauPetV0
-    height: 50, // mesma altura
-    backgroundColor: '#F2F2F2',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 15,
-    color: '#333',
-  },
-  button: {
-    width: 270,
-    height: 50,
-    backgroundColor: '#4CAF50',
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontWeight: "bold",
+    color: "#333",
     marginTop: 10,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 4,
+    textAlign: "center",
+    color: "#222",
+  },
+  description: {
+    fontSize: 14,
+    color: "#777",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+  },
+  icon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#333",
   },
   forgotText: {
-    marginTop: 20,
-    color: '#4CAF50',
-    fontWeight: '500',
+    color: "#2ecc71",
+    fontSize: 13,
+    textAlign: "right",
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: "#2ecc71",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  registerText: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#555",
+  },
+  registerLink: {
+    color: "#2ecc71",
+    fontWeight: "600",
   },
 });
