@@ -6,4 +6,5 @@ export type RootStackParamList = {
   TelaConfiguracao: undefined;
   TelaCadastroPet: undefined;
   TelaCadastroVacinas: undefined;
+  Dashboard: undefined; 
 };
