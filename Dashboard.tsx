@@ -46,12 +46,9 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
 
-<<<<<<< HEAD
   // Estado para a foto do perfil
   const [profileImage, setProfileImage] = useState(require("./assets/perfil.png"));
 
-=======
->>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
   useEffect(() => {
     const mockVaccines = [
       { next_dose_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
