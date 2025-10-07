@@ -7,9 +7,13 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
+<<<<<<< HEAD
   Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+=======
+} from "react-native";
+>>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
 
 type Pet = {
   id: string;
@@ -42,9 +46,12 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
 
+<<<<<<< HEAD
   // Estado para a foto do perfil
   const [profileImage, setProfileImage] = useState(require("./assets/perfil.png"));
 
+=======
+>>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
   useEffect(() => {
     const mockVaccines = [
       { next_dose_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
@@ -83,6 +90,7 @@ export default function Dashboard({ navigation }: Props) {
     }, 1000);
   }, []);
 
+<<<<<<< HEAD
   // Função para selecionar nova foto
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -114,6 +122,11 @@ export default function Dashboard({ navigation }: Props) {
 
         <Text style={styles.headerText}>Olá, João Silva! 👋</Text>
       </View>
+=======
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.header}>Olá, João Silva! 👋</Text>
+>>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
 
       {/* Estatísticas */}
       <View style={styles.statsContainer}>
@@ -195,6 +208,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     flexGrow: 1,
   },
+<<<<<<< HEAD
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -219,6 +233,13 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
+=======
+  header: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 25,
+>>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
     color: "#1B5E20",
   },
   statsContainer: {
