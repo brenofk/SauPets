@@ -43,7 +43,7 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingPets, setLoadingPets] = useState(true);
 
   // Estado para a foto do perfil
-  const [profileImage, setProfileImage] = useState(require("./assets/Perfil.png"));
+  const [profileImage, setProfileImage] = useState(require("./assets/perfil.png"));
 
   useEffect(() => {
     const mockVaccines = [
