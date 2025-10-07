@@ -19,15 +19,12 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Dashboard">
-<<<<<<< HEAD
         <Stack.Screen name="BemVindo" component={BemVindo} options={{ headerShown: false }} />
-=======
         <Stack.Screen
           name="BemVindo"
           component={BemVindo}
           options={{ headerShown: false }}
         />
->>>>>>> a24cf1df1d6f03a4862a01d56b7f79be30d5d612
         <Stack.Screen name="Cadastro" component={Cadastro} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="TelaPrincipal" component={TelaPrincipal} />
