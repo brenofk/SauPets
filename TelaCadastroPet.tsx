@@ -6,15 +6,34 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const TelaCadastroPet = () => {
   const [nomePet, setNomePet] = useState("");
   const [tipoAnimal, setTipoAnimal] = useState("");
+  const [erroNome, setErroNome] = useState(false);
+  const [erroTipo, setErroTipo] = useState(false);
 
   const handleCadastro = () => {
-    console.log("Pet cadastrado:", { nomePet, tipoAnimal });
+    const nomeVazio = nomePet.trim() === "";
+    const tipoVazio = tipoAnimal.trim() === "";
+
+    setErroNome(nomeVazio);
+    setErroTipo(tipoVazio);
+
+    if (nomeVazio || tipoVazio) {
+      Alert.alert("Campos obrigatórios", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    // Se passou na validação
+    Alert.alert("Sucesso", "Pet cadastrado com sucesso!");
+    setNomePet("");
+    setTipoAnimal("");
+    setErroNome(false);
+    setErroTipo(false);
   };
 
   return (
@@ -24,13 +43,21 @@ const TelaCadastroPet = () => {
         <TextInput
           placeholder="hunter"
           placeholderTextColor="#777"
-          style={styles.input}
+          style={[
+            styles.input,
+            erroNome && { borderColor: "#E53935", borderWidth: 2 },
+          ]}
           value={nomePet}
           onChangeText={setNomePet}
         />
 
         <Text style={styles.label}>Escolha o tipo de animal</Text>
-        <View style={styles.pickerContainer}>
+        <View
+          style={[
+            styles.pickerContainer,
+            erroTipo && { borderColor: "#E53935", borderWidth: 2 },
+          ]}
+        >
           <Picker
             selectedValue={tipoAnimal}
             onValueChange={(itemValue) => setTipoAnimal(itemValue)}
@@ -42,7 +69,10 @@ const TelaCadastroPet = () => {
           </Picker>
         </View>
 
-        <TouchableOpacity style={[styles.botao, styles.botaoPrimario]} onPress={handleCadastro}>
+        <TouchableOpacity
+          style={[styles.botao, styles.botaoPrimario]}
+          onPress={handleCadastro}
+        >
           <Text style={styles.botaoTexto}>Cadastrar pet</Text>
         </TouchableOpacity>
 
@@ -59,13 +89,13 @@ export default TelaCadastroPet;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#DDF3E0", // fundo igual ao dashboard
+    backgroundColor: "#DDF3E0",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   card: {
-    backgroundColor: "#C7E7D4", // mesma cor dos cards do dashboard
+    backgroundColor: "#C7E7D4",
     padding: 25,
     borderRadius: 16,
     width: "90%",
@@ -77,7 +107,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: "#1B5E20", // mesmo verde escuro usado em títulos
+    color: "#1B5E20",
     marginBottom: 6,
     fontWeight: "600",
   },
@@ -111,10 +141,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   botaoPrimario: {
-    backgroundColor: "#4CAF50", // verde principal
+    backgroundColor: "#4CAF50",
   },
   botaoSecundario: {
-    backgroundColor: "#A5D6A7", // verde secundário
+    backgroundColor: "#A5D6A7",
   },
   botaoTexto: {
     color: "#fff",
