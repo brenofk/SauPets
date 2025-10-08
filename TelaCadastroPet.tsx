@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { FaCat, FaPaw, FaHome } from 'react-icons/fa'; // Somente se estiver usando React DOM
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
 
 const TelaCadastroPet = () => {
-  const [nomePet, setNomePet] = useState('');
-  const [tipoAnimal, setTipoAnimal] = useState('');
+  const [nomePet, setNomePet] = useState("");
+  const [tipoAnimal, setTipoAnimal] = useState("");
 
   const handleCadastro = () => {
-    console.log('Pet cadastrado:', { nomePet, tipoAnimal });
+    console.log("Pet cadastrado:", { nomePet, tipoAnimal });
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.label}>Digite o nome do seu pet</Text>
         <TextInput
           placeholder="hunter"
+          placeholderTextColor="#777"
           style={styles.input}
           value={nomePet}
           onChangeText={setNomePet}
@@ -35,11 +42,11 @@ const TelaCadastroPet = () => {
           </Picker>
         </View>
 
-        <TouchableOpacity style={styles.botao} onPress={handleCadastro}>
+        <TouchableOpacity style={[styles.botao, styles.botaoPrimario]} onPress={handleCadastro}>
           <Text style={styles.botaoTexto}>Cadastrar pet</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.botao}>
+        <TouchableOpacity style={[styles.botao, styles.botaoSecundario]}>
           <Text style={styles.botaoTexto}>Início</Text>
         </TouchableOpacity>
       </View>
@@ -50,58 +57,68 @@ const TelaCadastroPet = () => {
 export default TelaCadastroPet;
 
 const styles = StyleSheet.create({
-  wrapper: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#d3dce6',
+    backgroundColor: "#DDF3E0", // fundo igual ao dashboard
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
   card: {
-    backgroundColor: '#e3e7eb',
-    padding: 30,
-    borderRadius: 20,
-    width: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
+    backgroundColor: "#C7E7D4", // mesma cor dos cards do dashboard
+    padding: 25,
+    borderRadius: 16,
+    width: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
-    shadowRadius: 6,
+    shadowRadius: 5,
     elevation: 5,
   },
   label: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#222',
+    fontSize: 16,
+    color: "#1B5E20", // mesmo verde escuro usado em títulos
+    marginBottom: 6,
+    fontWeight: "600",
   },
   input: {
-    width: '100%',
+    width: "100%",
+    backgroundColor: "#fff",
     padding: 10,
-    marginBottom: 20,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
+    borderColor: "#A5D6A7",
     fontSize: 14,
-    color: '#555',
+    color: "#333",
+    marginBottom: 20,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
+    borderColor: "#A5D6A7",
+    borderRadius: 8,
     marginBottom: 20,
-    overflow: 'hidden',
+    backgroundColor: "#fff",
+    overflow: "hidden",
   },
   picker: {
-    height: Platform.OS === 'ios' ? 150 : 50,
-    width: '100%',
+    height: Platform.OS === "ios" ? 150 : 50,
+    width: "100%",
   },
   botao: {
-    backgroundColor: '#42566e',
-    padding: 12,
-    borderRadius: 6,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
     marginBottom: 15,
-    alignItems: 'center',
+  },
+  botaoPrimario: {
+    backgroundColor: "#4CAF50", // verde principal
+  },
+  botaoSecundario: {
+    backgroundColor: "#A5D6A7", // verde secundário
   },
   botaoTexto: {
-    color: '#fff',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
 });
