@@ -16,6 +16,14 @@ const TelaCadastroPet = () => {
   const [erroNome, setErroNome] = useState(false);
   const [erroTipo, setErroTipo] = useState(false);
 
+  const mostrarAlerta = (titulo: string, mensagem: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${titulo}\n\n${mensagem}`);
+    } else {
+      Alert.alert(titulo, mensagem);
+    }
+  };
+
   const handleCadastro = () => {
     const nomeVazio = nomePet.trim() === "";
     const tipoVazio = tipoAnimal.trim() === "";
@@ -24,12 +32,12 @@ const TelaCadastroPet = () => {
     setErroTipo(tipoVazio);
 
     if (nomeVazio || tipoVazio) {
-      Alert.alert("Campos obrigatórios", "Por favor, preencha todos os campos.");
+      mostrarAlerta("Campos obrigatórios", "Por favor, preencha todos os campos.");
       return;
     }
 
     // Se passou na validação
-    Alert.alert("Sucesso", "Pet cadastrado com sucesso!");
+    mostrarAlerta("Sucesso", "Pet cadastrado com sucesso!");
     setNomePet("");
     setTipoAnimal("");
     setErroNome(false);
