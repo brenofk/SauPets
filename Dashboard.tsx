@@ -117,8 +117,12 @@ export default function Dashboard({ navigation }: Props) {
 
           <Text style={styles.headerText}>Olá, João Silva</Text>
 
-          <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
-            <Ionicons name="menu" size={30} color="#1B5E20" />
+          {/* Ícone de menu corrigido */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setMenuVisible(true)}
+          >
+            <Ionicons name="menu-outline" size={30} color="#1B5E20" />
           </TouchableOpacity>
         </View>
 
@@ -246,8 +250,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1B5E20",
   },
+  // Ícone de menu sem fundo quadrado
   menuButton: {
+    backgroundColor: "transparent",
     padding: 6,
+    borderRadius: 50,
   },
   statsContainer: {
     flexDirection: "row",
@@ -326,7 +333,6 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 4,
   },
-
   // ======== MENU LATERAL ========
   overlay: {
     flex: 1,
