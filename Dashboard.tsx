@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
+  Modal,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 type Pet = {
   id: string;
@@ -41,6 +43,7 @@ export default function Dashboard({ navigation }: Props) {
   const [recentPets, setRecentPets] = useState<Pet[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   // Estado para a foto do perfil
   const [profileImage, setProfileImage] = useState(require("./assets/perfil.jpg"));
@@ -98,93 +101,117 @@ export default function Dashboard({ navigation }: Props) {
       quality: 1,
     });
 
-    // ✅ Correção TypeScript: checa se o usuário não cancelou
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setProfileImage({ uri: result.assets[0].uri });
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Cabeçalho com imagem de perfil */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={pickImage} style={styles.profileButton}>
-          <Image source={profileImage} style={styles.profileImage} />
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Cabeçalho */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={pickImage} style={styles.profileButton}>
+            <Image source={profileImage} style={styles.profileImage} />
+          </TouchableOpacity>
 
-        <Text style={styles.headerText}>Olá, João Silva! 👋</Text>
-      </View>
+          <Text style={styles.headerText}>Olá, João Silva</Text>
 
-      {/* Estatísticas */}
-      <View style={styles.statsContainer}>
-        {loadingStats ? (
-          <ActivityIndicator size="large" color="#4CAF50" />
-        ) : (
-          <>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.totalPets}</Text>
-              <Text style={styles.statLabel}>Meus Pets</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.totalVaccines}</Text>
-              <Text style={styles.statLabel}>Vacinas</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.upcomingVaccines}</Text>
-              <Text style={styles.statLabel}>Próximas</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.overdueVaccines}</Text>
-              <Text style={styles.statLabel}>Atrasadas</Text>
-            </View>
-          </>
-        )}
-      </View>
+          <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+            <Ionicons name="menu" size={30} color="#1B5E20" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Ações rápidas */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
-          onPress={() => navigation.navigate("TelaCadastroPet")}
-        >
-          <Text style={styles.actionText}>+ Adicionar Pet</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#A5D6A7" }]}
-          onPress={() => navigation.navigate("TelaCadastroVacinas")}
-        >
-          <Text style={styles.actionText}>+ Adicionar Vacina</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Lista de Pets */}
-      <Text style={styles.sectionTitle}>Pets Recentes</Text>
-      {loadingPets ? (
-        <ActivityIndicator size="large" color="#4CAF50" />
-      ) : recentPets.length === 0 ? (
-        <Text style={styles.noPetsText}>Nenhum pet encontrado.</Text>
-      ) : (
-        <FlatList
-          data={recentPets}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.petItem}
-              onPress={() => console.log("Abrir detalhes do pet:", item.id)}
-            >
-              <Text style={styles.petName}>{item.name}</Text>
-              <Text style={styles.petInfo}>
-                {item.species} — {item.breed}
-              </Text>
-              <Text style={styles.petDate}>
-                {new Date(item.created_at).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
+        {/* Estatísticas */}
+        <View style={styles.statsContainer}>
+          {loadingStats ? (
+            <ActivityIndicator size="large" color="#4CAF50" />
+          ) : (
+            <>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.totalPets}</Text>
+                <Text style={styles.statLabel}>Meus Pets</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.totalVaccines}</Text>
+                <Text style={styles.statLabel}>Vacinas</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.upcomingVaccines}</Text>
+                <Text style={styles.statLabel}>Próximas</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{stats.overdueVaccines}</Text>
+                <Text style={styles.statLabel}>Atrasadas</Text>
+              </View>
+            </>
           )}
-        />
-      )}
-    </ScrollView>
+        </View>
+
+        {/* Ações rápidas */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
+            onPress={() => navigation.navigate("TelaCadastroPet")}
+          >
+            <Text style={styles.actionText}>+ Adicionar Pet</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: "#A5D6A7" }]}
+            onPress={() => navigation.navigate("TelaCadastroVacinas")}
+          >
+            <Text style={styles.actionText}>+ Adicionar Vacina</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Lista de Pets */}
+        <Text style={styles.sectionTitle}>Pets Recentes</Text>
+        {loadingPets ? (
+          <ActivityIndicator size="large" color="#4CAF50" />
+        ) : recentPets.length === 0 ? (
+          <Text style={styles.noPetsText}>Nenhum pet encontrado.</Text>
+        ) : (
+          <FlatList
+            data={recentPets}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.petItem}
+                onPress={() => console.log("Abrir detalhes do pet:", item.id)}
+              >
+                <Text style={styles.petName}>{item.name}</Text>
+                <Text style={styles.petInfo}>
+                  {item.species} — {item.breed}
+                </Text>
+                <Text style={styles.petDate}>
+                  {new Date(item.created_at).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      </ScrollView>
+
+      {/* Menu lateral */}
+      <Modal visible={menuVisible} transparent animationType="slide">
+        <TouchableOpacity style={styles.overlay} onPress={() => setMenuVisible(false)} />
+        <View style={styles.sideMenu}>
+          <Text style={styles.menuTitle}>Menu</Text>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              setMenuVisible(false);
+              navigation.navigate("Configuracao");
+            }}
+          >
+            <Ionicons name="settings-outline" size={22} color="#1B5E20" />
+            <Text style={styles.menuText}>Configuração</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -198,9 +225,8 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     marginBottom: 25,
-    gap: 10,
   },
   profileButton: {
     width: 55,
@@ -209,7 +235,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "#4CAF50",
-    marginRight: 10,
   },
   profileImage: {
     width: "100%",
@@ -217,9 +242,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#1B5E20",
+  },
+  menuButton: {
+    padding: 6,
   },
   statsContainer: {
     flexDirection: "row",
@@ -297,5 +325,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     marginTop: 4,
+  },
+
+  // ======== MENU LATERAL ========
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: "60%",
+    height: "100%",
+    backgroundColor: "#E8F5E9",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    elevation: 10,
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1B5E20",
+    marginBottom: 20,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    gap: 10,
+  },
+  menuText: {
+    fontSize: 16,
+    color: "#1B5E20",
   },
 });
