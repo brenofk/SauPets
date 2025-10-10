@@ -5,7 +5,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 
 type VacinasScreenNavigationProp = StackNavigationProp<RootStackParamList, 'TelaCadastroVacinas'>;
-
 type Props = { navigation: VacinasScreenNavigationProp };
 
 export default function TelaCadastroVacinas({ navigation }: Props) {
@@ -27,22 +26,78 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Cadastro de Vacinas</Text>
+      <View style={styles.card}>
+        <Text style={styles.title}>Cadastro de Vacinas</Text>
 
-      <TextInput style={styles.input} placeholder="Nome do Pet" value={nomePet} onChangeText={setNomePet} />
-      <TextInput style={styles.input} placeholder="Vacina" value={vacina} onChangeText={setVacina} />
+        <TextInput
+          style={styles.input}
+          placeholder="Nome do Pet"
+          placeholderTextColor="#777"
+          value={nomePet}
+          onChangeText={setNomePet}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Vacina"
+          placeholderTextColor="#777"
+          value={vacina}
+          onChangeText={setVacina}
+        />
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleSalvar} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Salvar</Text>}
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSalvar} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Salvar</Text>}
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
-  primaryButton: { backgroundColor: '#0ea5a4', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-  buttonText: { color: 'white', fontWeight: '600' },
+  container: {
+    flexGrow: 1,
+    backgroundColor: '#DDF3E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: '#C7E7D4',
+    padding: 25,
+    borderRadius: 16,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1B5E20',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A5D6A7',
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 15,
+  },
+  primaryButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
