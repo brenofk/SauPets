@@ -6,11 +6,13 @@ import { AuthContext } from "../contexts/AuthContext";
 import Login from "../screens/Auth/Login";
 import Cadastro from "../screens/Auth/Cadastro";
 import Dashboard from "../screens/Main/Dashboard";
+import BemVindo from "../screens/Auth/BemVindo";
 
 type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
   Dashboard: undefined;
+  BemVindo: undefined; // adiciona aqui
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -32,6 +34,7 @@ export default function AppRoutes() {
         <Stack.Screen name="Dashboard" component={Dashboard} />
       ) : (
         <>
+          <Stack.Screen name="BemVindo" component={BemVindo} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Cadastro" component={Cadastro} />
         </>
