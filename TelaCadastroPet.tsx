@@ -9,8 +9,10 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native"; // 👈 importar o hook
 
 const TelaCadastroPet = () => {
+  const navigation = useNavigation(); // 👈 inicializar navegação
   const [nomePet, setNomePet] = useState("");
   const [tipoAnimal, setTipoAnimal] = useState("");
   const [erroNome, setErroNome] = useState(false);
@@ -36,12 +38,16 @@ const TelaCadastroPet = () => {
       return;
     }
 
-    // Se passou na validação
     mostrarAlerta("Sucesso", "Pet cadastrado com sucesso!");
     setNomePet("");
     setTipoAnimal("");
     setErroNome(false);
     setErroTipo(false);
+  };
+
+  // 👇 Função para ir até o Dashboard
+  const irParaDashboard = () => {
+    navigation.navigate("Dashboard" as never); // o nome da tela deve bater com o que você registrou nas rotas
   };
 
   return (
@@ -84,7 +90,11 @@ const TelaCadastroPet = () => {
           <Text style={styles.botaoTexto}>Cadastrar pet</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.botao, styles.botaoSecundario]}>
+        {/* 👇 Botão de navegação para Dashboard */}
+        <TouchableOpacity
+          style={[styles.botao, styles.botaoSecundario]}
+          onPress={irParaDashboard}
+        >
           <Text style={styles.botaoTexto}>Início</Text>
         </TouchableOpacity>
       </View>
@@ -94,6 +104,7 @@ const TelaCadastroPet = () => {
 
 export default TelaCadastroPet;
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
