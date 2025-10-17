@@ -13,8 +13,8 @@ export default function BemVindo() {
     >
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <Image source={require('./assets/gato.png')} style={styles.icon} />
-        <Image source={require('./assets/cachorro-sentado.png')} style={styles.icon} />
+        <Image source={require('../assets/gato.png')} style={styles.icon} />
+        <Image source={require('../assets/cachorro-sentado.png')} style={styles.icon} />
       </View>
 
       {/* Corpo */}
