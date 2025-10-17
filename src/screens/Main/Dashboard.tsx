@@ -46,7 +46,7 @@ export default function Dashboard({ navigation }: Props) {
   const [menuVisible, setMenuVisible] = useState(false);
 
   // Estado para a foto do perfil
-  const [profileImage, setProfileImage] = useState(require("./assets/perfil.jpg"));
+  const [profileImage, setProfileImage] = useState(require("../../assets/perfil.jpg"));
 
   useEffect(() => {
     const mockVaccines = [
