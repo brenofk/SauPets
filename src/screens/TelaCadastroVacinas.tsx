@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList } from '../../types';
 
 type VacinasScreenNavigationProp = StackNavigationProp<RootStackParamList, 'TelaCadastroVacinas'>;
 type Props = { navigation: VacinasScreenNavigationProp };
