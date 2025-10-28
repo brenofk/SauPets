@@ -1,6 +1,6 @@
 # 🐾 SauPet
 
-**SauPet** é um aplicativo mobile desenvolvido com **React Native (Expo)** para facilitar o cuidado veterinário dos seus pets — tudo na palma da sua mão!  
+**SauPet** é um aplicativo mobile desenvolvido com **React Native (Expo)** que ajuda tutores de pets a gerenciar os documentos dos seus animais — como carteiras de vacinação, registros médicos e outros documentos importantes — de forma prática e organizada.
 
 ---
 
