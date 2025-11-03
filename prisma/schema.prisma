@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,9 +9,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Pet {
+model Usuario {
   id        Int      @id @default(autoincrement())
-  name      String
-  species   String
+  nome      String
+  cpf       String   @unique
+  email     String   @unique
+  telefone  String
+  senha     String
   createdAt DateTime @default(now())
 }

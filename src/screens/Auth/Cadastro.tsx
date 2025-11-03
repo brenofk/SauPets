@@ -16,30 +16,68 @@ export default function Cadastro({ navigation }: any) {
     return regex.test(senha);
   };
 
-  const handleCadastro = () => {
-    setErro(false);
-    setMensagemErro("");
+  const handleCadastro = async () => {
+  setErro(false);
+  setMensagemErro("");
 
-    if (!nome || !cpf || !email || !telefone || !senha || !confirmarSenha) {
-      setErro(true);
-      setMensagemErro("Todos os campos são obrigatórios.");
-      return;
+  if (!nome || !cpf || !email || !telefone || !senha || !confirmarSenha) {
+    setErro(true);
+    setMensagemErro("Todos os campos são obrigatórios.");
+    return;
+  }
+
+  if (!validarSenha(senha)) {
+    setErro(true);
+    setMensagemErro(
+      "A senha deve ter ao menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial."
+    );
+    return;
+  }
+
+  if (senha !== confirmarSenha) {
+    setErro(true);
+    setMensagemErro("As senhas não coincidem.");
+    return;
+  }
+
+  try {
+    // 👉 Troque o IP abaixo dependendo de como você testa:
+    const response = await fetch("http://localhost:3000/usuarios", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nome,
+        cpf,
+        email,
+        telefone,
+        senha,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      alert(`🎉 Usuário cadastrado com sucesso! ID: ${data.id}`);
+
+      // Limpa os campos e redireciona, se quiser
+      setNome("");
+      setCpf("");
+      setEmail("");
+      setTelefone("");
+      setSenha("");
+      setConfirmarSenha("");
+      navigation.navigate("Login");
+    } else {
+      const errorData = await response.json();
+      alert(`❌ Erro: ${errorData.error || "Falha ao cadastrar usuário"}`);
     }
+  } catch (error) {
+    console.error(error);
+    alert("⚠️ Erro de conexão com o servidor.");
+  }
+};
 
-    if (!validarSenha(senha)) {
-      setErro(true);
-      setMensagemErro("A senha deve ter ao menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.");
-      return;
-    }
-
-    if (senha !== confirmarSenha) {
-      setErro(true);
-      setMensagemErro("As senhas não coincidem.");
-      return;
-    }
-
-    alert("Cadastro realizado com sucesso!");
-  };
 
   // Função para retornar estilo de input
   const estiloInput = (campo: string) => {
