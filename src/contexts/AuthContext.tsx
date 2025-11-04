@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect, ReactNode, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Tipo do usuário (de acordo com o backend)
@@ -6,6 +6,7 @@ type User = {
   id: string;
   name: string;
   email: string;
+  foto_perfil?: string | null; // ✅ adicionamos o campo da foto
 };
 
 // Tipo do contexto
@@ -48,11 +49,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(data.error || "Falha no login");
       }
 
-      // Cria o objeto do usuário
+      // Cria o objeto do usuário com a foto, se vier do backend
       const userData: User = {
         id: String(data.usuario.id),
         name: data.usuario.nome,
         email: data.usuario.email,
+        foto_perfil: data.usuario.foto_perfil || null, // ✅ salva a foto, se existir
       };
 
       const token = data.token;
@@ -94,4 +96,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// ✅ Hook customizado para usar o AuthContext
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  }
+  return context;
 };

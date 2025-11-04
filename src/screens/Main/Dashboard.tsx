@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { AuthContext } from "../../contexts/AuthContext"; // ✅ importa o contexto
+import { AuthContext } from "../../contexts/AuthContext"; // ✅ Contexto
 
 type Pet = {
   id: string;
@@ -35,73 +35,70 @@ type Props = {
 };
 
 export default function Dashboard({ navigation }: Props) {
-  const { user, signOut } = useContext(AuthContext); // ✅ pega usuário logado e função de logout
-
+  const { user, signOut } = useContext(AuthContext);
   const [stats, setStats] = useState<Stats>({
     totalPets: 0,
     totalVaccines: 0,
     upcomingVaccines: 0,
     overdueVaccines: 0,
   });
-
   const [recentPets, setRecentPets] = useState<Pet[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState(require("../../assets/perfil.jpg"));
+  const [profileImage, setProfileImage] = useState<{ uri?: string }>(
+    user?.foto_perfil
+      ? { uri: user.foto_perfil }
+      : require("../../assets/perfil.jpg")
+  );
 
+  // 🔹 Busca dados do dashboard
   useEffect(() => {
-  const fetchDashboardData = async () => {
-    try {
-      if (!user?.id) return;
+    const fetchDashboardData = async () => {
+      try {
+        if (!user?.id) return;
 
-      // Busca pets do usuário logado
-      const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
-      const petsData = await petsResponse.json();
+        const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
+        const petsData = await petsResponse.json();
 
-      // Busca vacinas do usuário logado
-      const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
-      const vacinasData = await vacinasResponse.json();
+        const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
+        const vacinasData = await vacinasResponse.json();
 
-      // Contagem de vacinas próximas e atrasadas
-      const today = new Date();
-      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const today = new Date();
+        const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-      let upcoming = 0;
-      let overdue = 0;
+        let upcoming = 0;
+        let overdue = 0;
 
-      vacinasData.forEach((v: any) => {
-        const nextDose = new Date(v.proxima_dose);
-        if (nextDose < today) overdue++;
-        else if (nextDose < in30Days) upcoming++;
-      });
+        vacinasData.forEach((v: any) => {
+          const nextDose = new Date(v.proxima_dose);
+          if (nextDose < today) overdue++;
+          else if (nextDose < in30Days) upcoming++;
+        });
 
-      // Atualiza estado com dados reais
-      setStats({
-        totalPets: petsData.length,
-        totalVaccines: vacinasData.length,
-        upcomingVaccines: upcoming,
-        overdueVaccines: overdue,
-      });
+        setStats({
+          totalPets: petsData.length,
+          totalVaccines: vacinasData.length,
+          upcomingVaccines: upcoming,
+          overdueVaccines: overdue,
+        });
+        setRecentPets(petsData);
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+      } finally {
+        setLoadingStats(false);
+        setLoadingPets(false);
+      }
+    };
 
-      setRecentPets(petsData);
-    } catch (error) {
-      console.error("Erro ao carregar dados do dashboard:", error);
-    } finally {
-      setLoadingStats(false);
-      setLoadingPets(false);
-    }
-  };
+    fetchDashboardData();
+  }, [user]);
 
-  fetchDashboardData();
-}, [user]);
-
-
-  // 📸 Selecionar nova foto
+  // 📸 Atualizar foto de perfil
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      alert("Permissão necessária para acessar fotos!");
+      Alert.alert("Permissão necessária", "Você precisa permitir o acesso à galeria para escolher uma foto.");
       return;
     }
 
@@ -112,8 +109,47 @@ export default function Dashboard({ navigation }: Props) {
       quality: 1,
     });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setProfileImage({ uri: result.assets[0].uri });
+    if (result.canceled || !result.assets?.length) return;
+
+    const imageUri = result.assets[0].uri;
+    setProfileImage({ uri: imageUri }); // Atualiza visualmente na hora
+
+    try {
+      const formData = new FormData();
+      formData.append("foto", {
+        uri: imageUri,
+        name: `profile_${user?.id}.jpg`,
+        type: "image/jpeg",
+      } as any);
+
+      // ✅ ROTA CORRETA DO BACKEND
+      const response = await fetch(`http://192.168.1.4:3000/upload-profile/${user?.id}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const textResponse = await response.text();
+      console.log("📡 Resposta bruta do servidor:", textResponse);
+
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (err) {
+        console.error("❌ Resposta inválida do servidor:", textResponse);
+        Alert.alert("Erro", "Resposta inválida do servidor. Verifique a rota /upload-profile.");
+        return;
+      }
+
+      if (response.ok && data.fotoUrl) {
+        Alert.alert("Sucesso", "Foto de perfil atualizada!");
+        setProfileImage({ uri: data.fotoUrl });
+      } else {
+        console.error("❌ Falha no upload:", data);
+        Alert.alert("Erro", data.error || "Falha ao enviar a imagem.");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar foto:", error);
+      Alert.alert("Erro", "Não foi possível enviar a imagem para o servidor.");
     }
   };
 
@@ -138,15 +174,16 @@ export default function Dashboard({ navigation }: Props) {
         {/* Cabeçalho */}
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={pickImage} style={styles.profileButton}>
-            <Image source={profileImage} style={styles.profileImage} />
+            <Image
+              source={profileImage.uri ? { uri: profileImage.uri } : profileImage}
+              style={styles.profileImage}
+            />
           </TouchableOpacity>
 
-          {/* ✅ Nome real do usuário */}
           <Text style={styles.headerText}>
             Olá, {user?.name || user?.email || "Usuário"}
           </Text>
 
-          {/* Menu lateral */}
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => setMenuVisible(true)}
@@ -199,7 +236,8 @@ export default function Dashboard({ navigation }: Props) {
         </View>
 
         {/* Lista de Pets */}
-        <Text style={styles.sectionTitle}>Pets Recentes</Text>
+        <Text style={styles.sectionTitle}>Meus Pets Recentes</Text>
+
         {loadingPets ? (
           <ActivityIndicator size="large" color="#4CAF50" />
         ) : recentPets.length === 0 ? (
@@ -211,7 +249,7 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() => console.log("Abrir detalhes do pet:", item.id)}
+                onPress={() => console.log("Detalhes do pet:", item.id)}
               >
                 <Text style={styles.petName}>{item.name}</Text>
                 <Text style={styles.petInfo}>
@@ -243,10 +281,9 @@ export default function Dashboard({ navigation }: Props) {
             }}
           >
             <Ionicons name="settings-outline" size={22} color="#1B5E20" />
-            <Text style={styles.menuText}>Configuração</Text>
+            <Text style={styles.menuText}>Configurações</Text>
           </TouchableOpacity>
 
-          {/* ✅ Botão de Logout */}
           <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={22} color="#E53935" />
             <Text style={[styles.menuText, { color: "#E53935" }]}>Sair</Text>
@@ -257,6 +294,7 @@ export default function Dashboard({ navigation }: Props) {
   );
 }
 
+// 🎨 Estilos
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#DDF3E0",

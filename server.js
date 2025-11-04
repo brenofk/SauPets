@@ -2,13 +2,18 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-
+/* =======================================================
+   ⚙️ CONFIGURAÇÕES BÁSICAS
+   ======================================================= */
 app.use(
   cors({
     origin: ["http://localhost:8081", "http://192.168.1.4:8081"],
@@ -19,8 +24,28 @@ app.use(
 
 app.use(express.json());
 
+// 📂 Servir arquivos de imagem de forma pública
+app.use("/uploads", express.static("uploads"));
+
 /* =======================================================
-   🟢 ROTA DE CADASTRO DE USUÁRIO (sem criptografia)
+   💾 CONFIGURAÇÃO DO MULTER (upload de fotos)
+   ======================================================= */
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = "uploads/perfis";
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+/* =======================================================
+   🟢 ROTA DE CADASTRO DE USUÁRIO
    ======================================================= */
 app.post("/usuarios", async (req, res) => {
   const { nome, cpf, email, telefone, senha } = req.body;
@@ -42,7 +67,7 @@ app.post("/usuarios", async (req, res) => {
 });
 
 /* =======================================================
-   🔵 ROTA DE LOGIN (sem criptografia)
+   🔵 ROTA DE LOGIN (agora inclui foto_perfil)
    ======================================================= */
 app.post("/login", async (req, res) => {
   const { email, senha } = req.body;
@@ -64,11 +89,37 @@ app.post("/login", async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        foto_perfil: usuario.foto_perfil || null, // agora envia a imagem também
       },
     });
   } catch (error) {
     console.error("❌ Erro no login:", error);
     res.status(500).json({ error: "Erro interno no servidor" });
+  }
+});
+
+/* =======================================================
+   🖼️ ROTA DE UPLOAD DE FOTO DE PERFIL
+   ======================================================= */
+app.post("/upload-profile/:userId", upload.single("foto"), async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Nenhum arquivo enviado." });
+    }
+
+    const fotoUrl = `http://192.168.1.4:3000/uploads/perfis/${req.file.filename}`;
+
+    await prisma.usuario.update({
+      where: { id: Number(userId) },
+      data: { foto_perfil: fotoUrl },
+    });
+
+    return res.json({ success: true, fotoUrl });
+  } catch (error) {
+    console.error("❌ Erro ao atualizar foto:", error);
+    res.status(500).json({ error: "Erro ao atualizar foto." });
   }
 });
 
