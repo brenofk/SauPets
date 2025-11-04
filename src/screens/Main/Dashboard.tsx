@@ -94,7 +94,7 @@ export default function Dashboard({ navigation }: Props) {
     fetchDashboardData();
   }, [user]);
 
-  // 📸 Atualizar foto de perfil
+  // 📸 Função corrigida de upload de imagem
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -112,48 +112,48 @@ export default function Dashboard({ navigation }: Props) {
     if (result.canceled || !result.assets?.length) return;
 
     const imageUri = result.assets[0].uri;
-    setProfileImage({ uri: imageUri }); // Atualiza visualmente na hora
+    setProfileImage({ uri: imageUri }); // Mostra a nova imagem imediatamente
 
     try {
       const formData = new FormData();
       formData.append("foto", {
         uri: imageUri,
-        name: `profile_${user?.id}.jpg`,
+        name: `profile_${user?.id || "unknown"}.jpg`,
         type: "image/jpeg",
       } as any);
 
-      // ✅ ROTA CORRETA DO BACKEND
+      // ✅ Corrigido para usar a rota certa do seu backend
       const response = await fetch(`http://192.168.1.4:3000/upload-profile/${user?.id}`, {
         method: "POST",
         body: formData,
       });
 
-      const textResponse = await response.text();
-      console.log("📡 Resposta bruta do servidor:", textResponse);
+      const raw = await response.text();
+      console.log("📡 Raw server response:", raw);
 
       let data;
       try {
-        data = JSON.parse(textResponse);
-      } catch (err) {
-        console.error("❌ Resposta inválida do servidor:", textResponse);
-        Alert.alert("Erro", "Resposta inválida do servidor. Verifique a rota /upload-profile.");
+        data = JSON.parse(raw);
+      } catch (e) {
+        console.error("❌ Server returned non-JSON:", raw);
+        Alert.alert("Erro", "Servidor retornou resposta inválida. Verifique /upload-profile no backend.");
         return;
       }
 
       if (response.ok && data.fotoUrl) {
-        Alert.alert("Sucesso", "Foto de perfil atualizada!");
         setProfileImage({ uri: data.fotoUrl });
+        Alert.alert("Sucesso", "Foto de perfil atualizada!");
       } else {
-        console.error("❌ Falha no upload:", data);
+        console.error("❌ Upload falhou:", data);
         Alert.alert("Erro", data.error || "Falha ao enviar a imagem.");
       }
     } catch (error) {
       console.error("Erro ao enviar foto:", error);
-      Alert.alert("Erro", "Não foi possível enviar a imagem para o servidor.");
+      Alert.alert("Erro", "Não foi possível enviar a imagem ao servidor.");
     }
   };
 
-  // 🚪 Logout com confirmação
+  // 🚪 Logout
   const handleLogout = async () => {
     Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
       { text: "Cancelar", style: "cancel" },
@@ -236,7 +236,7 @@ export default function Dashboard({ navigation }: Props) {
         </View>
 
         {/* Lista de Pets */}
-        <Text style={styles.sectionTitle}>Meus Pets Recentes</Text>
+        <Text style={styles.sectionTitle}>Pets Recentes</Text>
 
         {loadingPets ? (
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -249,7 +249,7 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() => console.log("Detalhes do pet:", item.id)}
+                onPress={() => console.log("Abrir detalhes do pet:", item.id)}
               >
                 <Text style={styles.petName}>{item.name}</Text>
                 <Text style={styles.petInfo}>
