@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -9,9 +9,11 @@ import {
   ScrollView,
   Image,
   Modal,
+  Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "../../contexts/AuthContext"; // ✅ importa o contexto
 
 type Pet = {
   id: string;
@@ -33,6 +35,8 @@ type Props = {
 };
 
 export default function Dashboard({ navigation }: Props) {
+  const { user, signOut } = useContext(AuthContext); // ✅ pega usuário logado e função de logout
+
   const [stats, setStats] = useState<Stats>({
     totalPets: 0,
     totalVaccines: 0,
@@ -44,49 +48,56 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
-
-  // Estado para a foto do perfil
   const [profileImage, setProfileImage] = useState(require("../../assets/perfil.jpg"));
 
   useEffect(() => {
-    const mockVaccines = [
-      { next_dose_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-      { next_dose_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString() },
-      { next_dose_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString() },
-    ];
+  const fetchDashboardData = async () => {
+    try {
+      if (!user?.id) return;
 
-    const mockPets = [
-      { id: "1", name: "Rex", species: "Cachorro", breed: "Labrador", created_at: new Date().toISOString() },
-      { id: "2", name: "Mimi", species: "Gato", breed: "Persa", created_at: new Date().toISOString() },
-      { id: "3", name: "Lulu", species: "Coelho", breed: "Anão", created_at: new Date().toISOString() },
-    ];
+      // Busca pets do usuário logado
+      const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
+      const petsData = await petsResponse.json();
 
-    const today = new Date();
-    const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      // Busca vacinas do usuário logado
+      const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
+      const vacinasData = await vacinasResponse.json();
 
-    let upcoming = 0;
-    let overdue = 0;
-    mockVaccines.forEach((vaccine) => {
-      const nextDose = new Date(vaccine.next_dose_date);
-      if (nextDose < today) overdue++;
-      else if (nextDose < in30Days) upcoming++;
-    });
+      // Contagem de vacinas próximas e atrasadas
+      const today = new Date();
+      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    setStats({
-      totalPets: mockPets.length,
-      totalVaccines: mockVaccines.length,
-      upcomingVaccines: upcoming,
-      overdueVaccines: overdue,
-    });
+      let upcoming = 0;
+      let overdue = 0;
 
-    setTimeout(() => {
-      setRecentPets(mockPets);
+      vacinasData.forEach((v: any) => {
+        const nextDose = new Date(v.proxima_dose);
+        if (nextDose < today) overdue++;
+        else if (nextDose < in30Days) upcoming++;
+      });
+
+      // Atualiza estado com dados reais
+      setStats({
+        totalPets: petsData.length,
+        totalVaccines: vacinasData.length,
+        upcomingVaccines: upcoming,
+        overdueVaccines: overdue,
+      });
+
+      setRecentPets(petsData);
+    } catch (error) {
+      console.error("Erro ao carregar dados do dashboard:", error);
+    } finally {
       setLoadingStats(false);
       setLoadingPets(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
-  // Função para selecionar nova foto
+  fetchDashboardData();
+}, [user]);
+
+
+  // 📸 Selecionar nova foto
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -106,6 +117,21 @@ export default function Dashboard({ navigation }: Props) {
     }
   };
 
+  // 🚪 Logout com confirmação
+  const handleLogout = async () => {
+    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          navigation.replace("Login");
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -115,9 +141,12 @@ export default function Dashboard({ navigation }: Props) {
             <Image source={profileImage} style={styles.profileImage} />
           </TouchableOpacity>
 
-          <Text style={styles.headerText}>Olá, João Silva</Text>
+          {/* ✅ Nome real do usuário */}
+          <Text style={styles.headerText}>
+            Olá, {user?.name || user?.email || "Usuário"}
+          </Text>
 
-          {/* Ícone de menu corrigido */}
+          {/* Menu lateral */}
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => setMenuVisible(true)}
@@ -199,7 +228,10 @@ export default function Dashboard({ navigation }: Props) {
 
       {/* Menu lateral */}
       <Modal visible={menuVisible} transparent animationType="slide">
-        <TouchableOpacity style={styles.overlay} onPress={() => setMenuVisible(false)} />
+        <TouchableOpacity
+          style={styles.overlay}
+          onPress={() => setMenuVisible(false)}
+        />
         <View style={styles.sideMenu}>
           <Text style={styles.menuTitle}>Menu</Text>
 
@@ -212,6 +244,12 @@ export default function Dashboard({ navigation }: Props) {
           >
             <Ionicons name="settings-outline" size={22} color="#1B5E20" />
             <Text style={styles.menuText}>Configuração</Text>
+          </TouchableOpacity>
+
+          {/* ✅ Botão de Logout */}
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#E53935" />
+            <Text style={[styles.menuText, { color: "#E53935" }]}>Sair</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -249,8 +287,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#1B5E20",
+    maxWidth: "60%",
   },
-  // Ícone de menu sem fundo quadrado
   menuButton: {
     backgroundColor: "transparent",
     padding: 6,
@@ -333,7 +371,6 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 4,
   },
-  // ======== MENU LATERAL ========
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
