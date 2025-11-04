@@ -33,24 +33,7 @@ export default function BemVindo() {
           </TouchableOpacity>
         </View>
 
-        {/* Benefícios */}
-        <View style={styles.features}>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>📋</Text>
-            <Text style={styles.featureTitle}>Controle de Vacinas</Text>
-            <Text style={styles.featureSubtitle}>Mantenha o histórico completo de vacinas dos seus pets sempre atualizado</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>🔔</Text>
-            <Text style={styles.featureTitle}>Lembretes Automáticos</Text>
-            <Text style={styles.featureSubtitle}>Receba lembretes para nunca esquecer as próximas vacinas</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>🐾</Text>
-            <Text style={styles.featureTitle}>Múltiplos Pets</Text>
-            <Text style={styles.featureSubtitle}>Gerencie os documentos dos seus pet em um único app</Text>
-          </View>
-        </View>
+        
       </View>
     </ScrollView>
   );
