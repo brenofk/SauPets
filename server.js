@@ -1,138 +1,52 @@
+// server.js
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-
-dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-/* =======================================================
-   ⚙️ CONFIGURAÇÕES BÁSICAS
-   ======================================================= */
-app.use(
-  cors({
-    origin: ["http://localhost:8081", "http://192.168.1.4:8081"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
+app.use(cors());
 app.use(express.json());
 
-// 📂 Servir arquivos de imagem de forma pública
-app.use("/uploads", express.static("uploads"));
-
-/* =======================================================
-   💾 CONFIGURAÇÃO DO MULTER (upload de fotos)
-   ======================================================= */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = "uploads/perfis";
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
-
-/* =======================================================
-   🟢 ROTA DE CADASTRO DE USUÁRIO
-   ======================================================= */
-app.post("/usuarios", async (req, res) => {
-  const { nome, cpf, email, telefone, senha } = req.body;
-
+// Rota para listar pets de um usuário
+app.get("/pets/:userId", async (req, res) => {
   try {
-    const novoUsuario = await prisma.usuario.create({
-      data: { nome, cpf, email, telefone, senha },
+    const userId = Number(req.params.userId);
+
+    const pets = await prisma.pet.findMany({
+      where: { usuario_id: userId }, // ajuste para seu campo real
+      orderBy: { id: "desc" }, // não existe created_at na sua tabela, use id
     });
 
-    res.status(201).json({
-      id: novoUsuario.id,
-      nome: novoUsuario.nome,
-      email: novoUsuario.email,
-    });
+    // Garantir que sempre retorne um array
+    res.json(Array.isArray(pets) ? pets : []);
   } catch (error) {
-    console.error("❌ Erro ao criar usuário:", error);
-    res.status(400).json({ error: "Erro ao criar usuário" });
+    console.error("Erro ao buscar pets:", error);
+    res.status(500).json({ error: "Erro ao buscar pets" });
   }
 });
 
-/* =======================================================
-   🔵 ROTA DE LOGIN (agora inclui foto_perfil)
-   ======================================================= */
-app.post("/login", async (req, res) => {
-  const { email, senha } = req.body;
-
+// Rota para listar vacinas de um usuário
+app.get("/vacinas/:userId", async (req, res) => {
   try {
-    const usuario = await prisma.usuario.findUnique({ where: { email } });
+    const userId = Number(req.params.userId);
 
-    if (!usuario) {
-      return res.status(401).json({ error: "Usuário não encontrado" });
-    }
-
-    if (usuario.senha !== senha) {
-      return res.status(401).json({ error: "Senha incorreta" });
-    }
-
-    res.status(200).json({
-      message: "Login realizado com sucesso!",
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        foto_perfil: usuario.foto_perfil || null, // agora envia a imagem também
-      },
+    const vacinas = await prisma.vacina.findMany({
+      where: { usuario_id: userId }, // ajuste para seu campo real
+      orderBy: { proxima_dose: "asc" },
     });
+
+    // Garantir que sempre retorne um array
+    res.json(Array.isArray(vacinas) ? vacinas : []);
   } catch (error) {
-    console.error("❌ Erro no login:", error);
-    res.status(500).json({ error: "Erro interno no servidor" });
+    console.error("Erro ao buscar vacinas:", error);
+    res.status(500).json({ error: "Erro ao buscar vacinas" });
   }
 });
 
-/* =======================================================
-   🖼️ ROTA DE UPLOAD DE FOTO DE PERFIL
-   ======================================================= */
-app.post("/upload-profile/:userId", upload.single("foto"), async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Nenhum arquivo enviado." });
-    }
-
-    const fotoUrl = `http://192.168.1.4:3000/uploads/perfis/${req.file.filename}`;
-
-    await prisma.usuario.update({
-      where: { id: Number(userId) },
-      data: { foto_perfil: fotoUrl },
-    });
-
-    return res.json({ success: true, fotoUrl });
-  } catch (error) {
-    console.error("❌ Erro ao atualizar foto:", error);
-    res.status(500).json({ error: "Erro ao atualizar foto." });
-  }
-});
-
-/* =======================================================
-   🧩 ROTA DE TESTE
-   ======================================================= */
-app.get("/", (req, res) => {
-  res.send("API do SauPets funcionando 🐾");
-});
-
-/* =======================================================
-   🚀 INICIA O SERVIDOR
-   ======================================================= */
-app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 Servidor rodando em http://localhost:3000");
+// Inicia o servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

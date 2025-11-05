@@ -54,45 +54,49 @@ export default function Dashboard({ navigation }: Props) {
 
   // 🔹 Busca dados do dashboard
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        if (!user?.id) return;
+  const fetchDashboardData = async () => {
+    try {
+      if (!user?.id) return;
 
-        const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
-        const petsData = await petsResponse.json();
+      const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
+      const petsDataRaw = await petsResponse.json();
+      const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
 
-        const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
-        const vacinasData = await vacinasResponse.json();
+      const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
+      const vacinasDataRaw = await vacinasResponse.json();
+      const vacinasData = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
 
-        const today = new Date();
-        const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const today = new Date();
+      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-        let upcoming = 0;
-        let overdue = 0;
+      let upcoming = 0;
+      let overdue = 0;
 
-        vacinasData.forEach((v: any) => {
-          const nextDose = new Date(v.proxima_dose);
-          if (nextDose < today) overdue++;
-          else if (nextDose < in30Days) upcoming++;
-        });
+      vacinasData.forEach((v: any) => {
+        const nextDose = new Date(v.proxima_dose);
+        if (nextDose < today) overdue++;
+        else if (nextDose < in30Days) upcoming++;
+      });
 
-        setStats({
-          totalPets: petsData.length,
-          totalVaccines: vacinasData.length,
-          upcomingVaccines: upcoming,
-          overdueVaccines: overdue,
-        });
-        setRecentPets(petsData);
-      } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
-      } finally {
-        setLoadingStats(false);
-        setLoadingPets(false);
-      }
-    };
+      setStats({
+        totalPets: petsData.length,
+        totalVaccines: vacinasData.length,
+        upcomingVaccines: upcoming,
+        overdueVaccines: overdue,
+      });
 
-    fetchDashboardData();
-  }, [user]);
+      setRecentPets(petsData);
+    } catch (error) {
+      console.error("Erro ao carregar dados do dashboard:", error);
+    } finally {
+      setLoadingStats(false);
+      setLoadingPets(false);
+    }
+  };
+
+  fetchDashboardData();
+}, [user]);
+
 
   // 📸 Função corrigida de upload de imagem
   const pickImage = async () => {
@@ -153,20 +157,26 @@ export default function Dashboard({ navigation }: Props) {
     }
   };
 
-  // 🚪 Logout
   const handleLogout = async () => {
-    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Sair",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          navigation.replace("Login");
-        },
+  setMenuVisible(false);
+
+  Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
+    { text: "Cancelar", style: "cancel" },
+    {
+      text: "Sair",
+      style: "destructive",
+      onPress: async () => {
+        await signOut(); // Limpa AsyncStorage e estado global
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Cadastro" }], // 🔹 Navega para a tela Login
+        });
       },
-    ]);
-  };
+    },
+  ]);
+};
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
