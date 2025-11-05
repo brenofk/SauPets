@@ -9,19 +9,19 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// ===== ROTAS =====
+
 // Rota para listar pets de um usuário
 app.get("/pets/:userId", async (req, res) => {
   try {
     const userId = Number(req.params.userId);
 
-    // Verificando os pets para o usuário
     const pets = await prisma.pet.findMany({
-      where: { usuario_id: userId }, // Relacionando pets ao usuário com o campo usuario_id
-      orderBy: { id: "desc" }, // Utilizando id para ordenar os pets (já que não tem 'created_at')
+      where: { usuario_id: userId },
+      orderBy: { id: "desc" },
     });
 
-    // Garantindo que retorne um array, mesmo se estiver vazio
-    res.json(pets); 
+    res.json(pets);
   } catch (error) {
     console.error("Erro ao buscar pets:", error);
     res.status(500).json({ error: "Erro ao buscar pets" });
@@ -33,28 +33,74 @@ app.get("/vacinas/:userId", async (req, res) => {
   try {
     const userId = Number(req.params.userId);
 
-    // Encontrando os pets do usuário para depois pegar as vacinas
     const pets = await prisma.pet.findMany({
-      where: { usuario_id: userId }, // Relacionando pets ao usuário
+      where: { usuario_id: userId },
     });
 
-    if (pets.length === 0) {
-      return res.json([]); // Retorna um array vazio se o usuário não tiver pets
-    }
+    if (pets.length === 0) return res.json([]);
 
-    // Pega as vacinas relacionadas aos pets do usuário
     const vacinas = await prisma.vacina.findMany({
-      where: {
-        pet_id: { in: pets.map(pet => pet.id) }, // Relacionando vacinas aos pets
-      },
-      orderBy: { proxima_dose: "asc" }, // Ordenando por proxima_dose
+      where: { pet_id: { in: pets.map((pet) => pet.id) } },
+      orderBy: { proxima_dose: "asc" },
     });
 
-    // Garantindo que retorne um array de vacinas
     res.json(vacinas);
   } catch (error) {
     console.error("Erro ao buscar vacinas:", error);
     res.status(500).json({ error: "Erro ao buscar vacinas" });
+  }
+});
+
+// Rota para cadastrar usuário
+app.post("/usuarios", async (req, res) => {
+  try {
+    const { nome, cpf, email, telefone, senha } = req.body;
+
+    if (!nome || !cpf || !email || !telefone || !senha) {
+      return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+    }
+
+    const usuarioExistente = await prisma.usuario.findFirst({
+      where: { OR: [{ email }, { cpf }] },
+    });
+
+    if (usuarioExistente) {
+      return res.status(400).json({ error: "Usuário já cadastrado" });
+    }
+
+    const novoUsuario = await prisma.usuario.create({
+      data: { nome, cpf, email, telefone, senha },
+    });
+
+    res.status(201).json(novoUsuario);
+  } catch (error) {
+    console.error("Erro ao cadastrar usuário:", error);
+    res.status(500).json({ error: "Erro ao cadastrar usuário" });
+  }
+});
+
+// Rota para login de usuário
+app.post("/login", async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      return res.status(400).json({ error: "Email e senha são obrigatórios" });
+    }
+
+    const usuario = await prisma.usuario.findFirst({ where: { email, senha } });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    // Aqui você pode gerar um token real se quiser, por enquanto apenas envia os dados do usuário
+    const token = "token-fake-123"; // ⚠️ Substitua por JWT se desejar
+
+    res.json({ usuario, token });
+  } catch (error) {
+    console.error("Erro ao fazer login:", error);
+    res.status(500).json({ error: "Erro ao fazer login" });
   }
 });
 
