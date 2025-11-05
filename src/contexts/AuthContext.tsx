@@ -1,15 +1,15 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Tipo do usuário (de acordo com o backend)
+// Tipos de dados do usuário
 type User = {
   id: string;
   name: string;
   email: string;
-  foto_perfil?: string | null; // ✅ adicionamos o campo da foto
+  foto_perfil?: string | null;
 };
 
-// Tipo do contexto
+// Tipagem do contexto de autenticação
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -17,7 +17,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
 };
 
-// Criação do contexto
+// Criação do contexto de autenticação
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -25,7 +25,7 @@ export const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-// Provider (gerencia o estado global de autenticação)
+// Tipo para as propriedades do AuthProvider
 type AuthProviderProps = {
   children: ReactNode;
 };
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Função de login (chama o backend)
+  // Função para fazer login
   const signIn = async (email: string, password: string) => {
     try {
       const response = await fetch("http://192.168.1.4:3000/login", {
@@ -49,17 +49,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(data.error || "Falha no login");
       }
 
-      // Cria o objeto do usuário com a foto, se vier do backend
+      // Cria o objeto do usuário
       const userData: User = {
         id: String(data.usuario.id),
         name: data.usuario.nome,
         email: data.usuario.email,
-        foto_perfil: data.usuario.foto_perfil || null, // ✅ salva a foto, se existir
+        foto_perfil: data.usuario.foto_perfil || null,
       };
 
       const token = data.token;
 
-      // ✅ Salva no estado global e no AsyncStorage
+      // Atualiza o estado global e o AsyncStorage
       setUser(userData);
       await AsyncStorage.setItem("@MyApp:user", JSON.stringify(userData));
       await AsyncStorage.setItem("@MyApp:token", token);
@@ -69,13 +69,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Função de logout
+  // Função para fazer logout
   const signOut = async () => {
     setUser(null);
     await AsyncStorage.multiRemove(["@MyApp:user", "@MyApp:token"]);
   };
 
-  // Carrega o usuário salvo no AsyncStorage ao iniciar o app
+  // Carrega o usuário salvo no AsyncStorage quando o app inicia
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-// ✅ Hook customizado para usar o AuthContext
+// Hook customizado para usar o AuthContext em outros componentes
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
