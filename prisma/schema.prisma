@@ -10,8 +10,9 @@ datasource db {
 model Usuario {
   id            Int       @id @default(autoincrement())
   nome          String
+  cpf           String    @unique
   email         String    @unique
-  senha_hash    String
+  senha         String    // <- agora é texto puro
   telefone      String?
   data_cadastro DateTime  @default(now())
 
