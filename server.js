@@ -14,13 +14,14 @@ app.get("/pets/:userId", async (req, res) => {
   try {
     const userId = Number(req.params.userId);
 
+    // Verificando os pets para o usuário
     const pets = await prisma.pet.findMany({
-      where: { usuario_id: userId }, // ajuste para seu campo real
-      orderBy: { id: "desc" }, // não existe created_at na sua tabela, use id
+      where: { usuario_id: userId }, // Relacionando pets ao usuário com o campo usuario_id
+      orderBy: { id: "desc" }, // Utilizando id para ordenar os pets (já que não tem 'created_at')
     });
 
-    // Garantir que sempre retorne um array
-    res.json(Array.isArray(pets) ? pets : []);
+    // Garantindo que retorne um array, mesmo se estiver vazio
+    res.json(pets); 
   } catch (error) {
     console.error("Erro ao buscar pets:", error);
     res.status(500).json({ error: "Erro ao buscar pets" });
@@ -32,13 +33,25 @@ app.get("/vacinas/:userId", async (req, res) => {
   try {
     const userId = Number(req.params.userId);
 
-    const vacinas = await prisma.vacina.findMany({
-      where: { usuario_id: userId }, // ajuste para seu campo real
-      orderBy: { proxima_dose: "asc" },
+    // Encontrando os pets do usuário para depois pegar as vacinas
+    const pets = await prisma.pet.findMany({
+      where: { usuario_id: userId }, // Relacionando pets ao usuário
     });
 
-    // Garantir que sempre retorne um array
-    res.json(Array.isArray(vacinas) ? vacinas : []);
+    if (pets.length === 0) {
+      return res.json([]); // Retorna um array vazio se o usuário não tiver pets
+    }
+
+    // Pega as vacinas relacionadas aos pets do usuário
+    const vacinas = await prisma.vacina.findMany({
+      where: {
+        pet_id: { in: pets.map(pet => pet.id) }, // Relacionando vacinas aos pets
+      },
+      orderBy: { proxima_dose: "asc" }, // Ordenando por proxima_dose
+    });
+
+    // Garantindo que retorne um array de vacinas
+    res.json(vacinas);
   } catch (error) {
     console.error("Erro ao buscar vacinas:", error);
     res.status(500).json({ error: "Erro ao buscar vacinas" });

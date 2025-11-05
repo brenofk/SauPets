@@ -7,13 +7,79 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model usuario {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  cpf         String   @unique(map: "Usuario_cpf_key")
-  email       String   @unique(map: "Usuario_email_key")
-  telefone    String
-  foto_perfil String?  @db.VarChar(255)
-  senha       String
-  createdAt   DateTime @default(now())
+model Usuario {
+  id            Int       @id @default(autoincrement())
+  nome          String
+  email         String    @unique
+  senha_hash    String
+  telefone      String?
+  data_cadastro DateTime  @default(now())
+
+  pets          Pet[]     @relation("UsuarioPets")
+  lembretes     Lembrete[] @relation("UsuarioLembretes")
+}
+
+model Pet {
+  id            Int       @id @default(autoincrement())
+  usuario_id    Int
+  nome          String
+  sexo          Sexo
+  peso          Decimal?
+  foto_url      String?
+
+  usuario       Usuario   @relation("UsuarioPets", fields: [usuario_id], references: [id])
+  vacinas       Vacina[]
+  documentos    Documento[]
+  lembretes     Lembrete[] @relation("PetLembretes")
+
+  @@index([usuario_id])
+}
+
+model Vacina {
+  id            Int       @id @default(autoincrement())
+  pet_id        Int
+  nome_vacina   String
+  data_aplicacao DateTime?
+  data_reforco  DateTime?
+  veterinario   String?
+
+  pet           Pet       @relation(fields: [pet_id], references: [id])
+}
+
+model Documento {
+  id            Int       @id @default(autoincrement())
+  pet_id        Int
+  titulo        String
+  tipo          DocumentoTipo
+  arquivo_url   String
+  data_upload   DateTime @default(now())
+
+  pet           Pet       @relation(fields: [pet_id], references: [id])
+}
+
+model Lembrete {
+  id            Int       @id @default(autoincrement())
+  usuario_id    Int
+  pet_id        Int?
+  titulo        String
+  descricao     String?
+  data_evento   DateTime
+  notificado    Boolean   @default(false)
+
+  usuario       Usuario   @relation("UsuarioLembretes", fields: [usuario_id], references: [id])
+  pet           Pet?      @relation("PetLembretes", fields: [pet_id], references: [id])
+
+  @@index([usuario_id, pet_id])
+}
+
+enum Sexo {
+  M
+  F
+}
+
+enum DocumentoTipo {
+  carteira_vacinacao
+  exame
+  receita
+  outro
 }
