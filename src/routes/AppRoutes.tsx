@@ -7,7 +7,8 @@ import Login from "../screens/Auth/Login";
 import Cadastro from "../screens/Auth/Cadastro";
 import Dashboard from "../screens/Main/Dashboard";
 
-type RootStackParamList = {
+// ✅ Tipos de rotas
+export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
   Dashboard: undefined;
@@ -29,12 +30,15 @@ export default function AppRoutes() {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="Login"
+      // 👇 Ajuste principal: muda a rota inicial de acordo com o estado do usuário
+      initialRouteName={user ? "Dashboard" : "Login"}
     >
       {user ? (
+        // Usuário logado vai direto para o Dashboard
         <Stack.Screen name="Dashboard" component={Dashboard} />
       ) : (
-        <> 
+        // Usuário não logado vê Login e Cadastro
+        <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Cadastro" component={Cadastro} />
         </>

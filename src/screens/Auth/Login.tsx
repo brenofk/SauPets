@@ -13,11 +13,17 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { AuthContext } from "../../contexts/AuthContext"; // ✅ importa o contexto
+import { AuthContext } from "../../contexts/AuthContext";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../routes/AppRoutes"; // ajuste o caminho conforme seu projeto
+
+// Tipagem segura do navigation
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
 export default function Login() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { signIn } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +37,7 @@ export default function Login() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#2ecc71" />
       </View>
     );
@@ -57,11 +63,15 @@ export default function Login() {
     try {
       setLoading(true);
       await signIn(email, senha);
-      Alert.alert("✅ Sucesso", "Login realizado com sucesso!");
+
+      // Redireciona para Dashboard e limpa a pilha de navegação
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Dashboard" }],
+      });
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
 
-      // 🔍 Tratamento de mensagens personalizadas
       if (error.response) {
         if (error.response.status === 404) {
           Alert.alert("❌ Erro", "Usuário não cadastrado.");
@@ -152,7 +162,7 @@ export default function Login() {
           Não tem uma conta?{" "}
           <Text
             style={styles.registerLink}
-            onPress={() => navigation.navigate("Cadastro" as never)}
+            onPress={() => navigation.navigate("Cadastro")}
           >
             Cadastre-se
           </Text>
@@ -169,6 +179,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   logoContainer: { alignItems: "center", marginBottom: 30 },
   appName: { fontSize: 26, fontWeight: "bold", color: "#333", marginTop: 10 },
   subtitle: { fontSize: 14, color: "#666", textAlign: "center" },
@@ -182,19 +197,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 4,
-    textAlign: "center",
-    color: "#222",
-  },
-  description: {
-    fontSize: 14,
-    color: "#777",
-    marginBottom: 16,
-    textAlign: "center",
-  },
+  title: { fontSize: 20, fontWeight: "600", marginBottom: 4, textAlign: "center", color: "#222" },
+  description: { fontSize: 14, color: "#777", marginBottom: 16, textAlign: "center" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -206,19 +210,8 @@ const styles = StyleSheet.create({
   },
   icon: { marginRight: 8 },
   input: { flex: 1, paddingVertical: 10, fontSize: 14, color: "#333" },
-  forgotText: {
-    color: "#2ecc71",
-    fontSize: 13,
-    textAlign: "right",
-    marginBottom: 16,
-  },
-  button: {
-    backgroundColor: "#2ecc71",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginBottom: 16,
-  },
+  forgotText: { color: "#2ecc71", fontSize: 13, textAlign: "right", marginBottom: 16 },
+  button: { backgroundColor: "#2ecc71", borderRadius: 12, paddingVertical: 12, alignItems: "center", marginBottom: 16 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   registerText: { fontSize: 14, textAlign: "center", color: "#555" },
   registerLink: { color: "#2ecc71", fontWeight: "600" },
