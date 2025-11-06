@@ -39,17 +39,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       const data = await response.json();
-
+      console.log("🔍 Resposta do backend:", data);
       if (!response.ok) {
         throw new Error(data.error || "Falha no login");
       }
 
       const userData: User = {
-        id: String(data.usuario.id),
-        name: data.usuario.nome,
-        email: data.usuario.email,
-        foto_perfil: data.usuario.foto_perfil || null,
-      };
+        id: String(data.id),
+        name: data.nome,
+        email: data.email || "", // se o backend não retornar email, evita erro
+        foto_perfil: data.foto_perfil || null,
+};
 
       const token = data.token;
 

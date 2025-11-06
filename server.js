@@ -60,9 +60,27 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Outras rotas (pets, vacinas etc.) permanecem iguais...
+// ✅ Nova rota: Buscar usuário por ID
+app.get("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    res.json(usuario);
+  } catch (error) {
+    console.error("Erro ao buscar usuário:", error);
+    res.status(500).json({ error: "Erro ao buscar usuário" });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });

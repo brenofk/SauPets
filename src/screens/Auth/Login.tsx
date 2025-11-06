@@ -8,17 +8,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { AuthContext } from "../../contexts/AuthContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../routes/AppRoutes"; // ajuste o caminho conforme seu projeto
+import { RootStackParamList } from "../../routes/AppRoutes";
 
-// Tipagem segura do navigation
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Login"
+>;
 
 export default function Login() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -30,6 +31,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [senhaError, setSenhaError] = useState("");
+  const [loginError, setLoginError] = useState(""); // <-- novo estado para o erro geral
 
   const [fontsLoaded] = useFonts({
     Feather: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"),
@@ -47,6 +49,7 @@ export default function Login() {
     let valid = true;
     setEmailError("");
     setSenhaError("");
+    setLoginError(""); // limpa o erro anterior
 
     if (email.trim() === "") {
       setEmailError("O email é obrigatório");
@@ -62,27 +65,24 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await signIn(email, senha);
 
-      // Redireciona para Dashboard e limpa a pilha de navegação
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Dashboard" }],
+      const response = await fetch("http://192.168.1.4:3000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
       });
-    } catch (error: any) {
-      console.error("Erro ao fazer login:", error);
 
-      if (error.response) {
-        if (error.response.status === 404) {
-          Alert.alert("❌ Erro", "Usuário não cadastrado.");
-        } else if (error.response.status === 401) {
-          Alert.alert("❌ Erro", "Senha incorreta.");
-        } else {
-          Alert.alert("❌ Erro", "Falha ao autenticar. Tente novamente.");
-        }
-      } else {
-        Alert.alert("❌ Erro", "Falha de conexão com o servidor.");
+      if (!response.ok) {
+        setLoginError("Usuário não encontrado.");
+        return;
       }
+
+      // sucesso → faz o login normalmente
+      await signIn(email, senha);
+      navigation.navigate("Dashboard");
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      setLoginError("Falha de conexão com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -142,6 +142,9 @@ export default function Login() {
         </View>
         {senhaError ? <Text style={styles.errorText}>{senhaError}</Text> : null}
 
+        {/* Exibe erro geral (como "Usuário não encontrado") */}
+        {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+
         <TouchableOpacity>
           <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
         </TouchableOpacity>
@@ -197,8 +200,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  title: { fontSize: 20, fontWeight: "600", marginBottom: 4, textAlign: "center", color: "#222" },
-  description: { fontSize: 14, color: "#777", marginBottom: 16, textAlign: "center" },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 4,
+    textAlign: "center",
+    color: "#222",
+  },
+  description: {
+    fontSize: 14,
+    color: "#777",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -210,10 +224,27 @@ const styles = StyleSheet.create({
   },
   icon: { marginRight: 8 },
   input: { flex: 1, paddingVertical: 10, fontSize: 14, color: "#333" },
-  forgotText: { color: "#2ecc71", fontSize: 13, textAlign: "right", marginBottom: 16 },
-  button: { backgroundColor: "#2ecc71", borderRadius: 12, paddingVertical: 12, alignItems: "center", marginBottom: 16 },
+  forgotText: {
+    color: "#2ecc71",
+    fontSize: 13,
+    textAlign: "right",
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: "#2ecc71",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   registerText: { fontSize: 14, textAlign: "center", color: "#555" },
   registerLink: { color: "#2ecc71", fontWeight: "600" },
-  errorText: { color: "red", fontSize: 12, marginBottom: 8, marginLeft: 4 },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 8,
+    marginLeft: 4,
+    textAlign: "center",
+  },
 });
