@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -24,15 +23,30 @@ type Props = {
 export default function TelaCadastroVacinas({ navigation }: Props) {
   const [nomePet, setNomePet] = useState("");
   const [vacina, setVacina] = useState("");
+  const [dataAplicacao, setDataAplicacao] = useState("");
+  const [dataReforco, setDataReforco] = useState("");
+  const [veterinario, setVeterinario] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSalvar = async () => {
     setLoading(true);
     try {
+      // Simula envio
       await new Promise((res) => setTimeout(res, 1000));
-      console.log("Vacina salva", { nomePet, vacina });
+      console.log("Vacina salva", {
+        nomePet,
+        vacina,
+        dataAplicacao,
+        dataReforco,
+        veterinario,
+      });
+
+      // Resetando campos
       setNomePet("");
       setVacina("");
+      setDataAplicacao("");
+      setDataReforco("");
+      setVeterinario("");
     } finally {
       setLoading(false);
     }
@@ -57,6 +71,33 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
           style={styles.input}
           value={vacina}
           onChangeText={setVacina}
+        />
+
+        <Text style={styles.label}>Data de Aplicação</Text>
+        <TextInput
+          placeholder="Ex: 2025-11-07"
+          placeholderTextColor="#777"
+          style={styles.input}
+          value={dataAplicacao}
+          onChangeText={setDataAplicacao}
+        />
+
+        <Text style={styles.label}>Data de Reforço (opcional)</Text>
+        <TextInput
+          placeholder="Ex: 2026-11-07"
+          placeholderTextColor="#777"
+          style={styles.input}
+          value={dataReforco}
+          onChangeText={setDataReforco}
+        />
+
+        <Text style={styles.label}>Veterinário (opcional)</Text>
+        <TextInput
+          placeholder="Ex: Dr. Carlos"
+          placeholderTextColor="#777"
+          style={styles.input}
+          value={veterinario}
+          onChangeText={setVeterinario}
         />
 
         <TouchableOpacity
