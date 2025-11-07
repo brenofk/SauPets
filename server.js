@@ -1,4 +1,4 @@
-// Para rodar no terminal, node server.js
+// Para rodar no terminal: node server.js
 
 import express from "express";
 import cors from "cors";
@@ -124,6 +124,28 @@ app.get("/pets/:usuarioId", async (req, res) => {
 // =======================
 // Vacinas
 // =======================
+
+// Cadastrar vacina (corrigido)
+app.post("/vacinas", async (req, res) => {
+  try {
+    const { pet_id, nome_vacina, data_aplicacao, data_reforco, veterinario } = req.body;
+
+    const novaVacina = await prisma.vacina.create({
+      data: {
+        pet_id: Number(pet_id),
+        nome_vacina,
+        data_aplicacao: data_aplicacao ? new Date(data_aplicacao) : null,
+        data_reforco: data_reforco ? new Date(data_reforco) : null,
+        veterinario: veterinario || null,
+      },
+    });
+
+    res.json(novaVacina);
+  } catch (error) {
+    console.error("Erro ao cadastrar vacina:", error);
+    res.status(500).json({ error: "Erro ao cadastrar vacina" });
+  }
+});
 
 // Listar vacinas de todos os pets de um usuário
 app.get("/vacinas/:usuarioId", async (req, res) => {
