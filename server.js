@@ -86,3 +86,39 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
+// Rota para cadastrar um pet
+app.post("/pets", async (req, res) => {
+  try {
+    const { nome, tipo, usuarioId } = req.body;
+
+    const novoPet = await prisma.pet.create({
+      data: {
+        nome,
+        tipo,
+        usuarioId: Number(usuarioId),
+      },
+    });
+
+    res.json(novoPet);
+  } catch (error) {
+    console.error("Erro ao cadastrar pet:", error);
+    res.status(500).json({ error: "Erro ao cadastrar pet" });
+  }
+});
+
+// Rota para listar pets de um usuário
+app.get("/pets/:usuarioId", async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+
+    const pets = await prisma.pet.findMany({
+      where: { usuarioId: Number(usuarioId) },
+    });
+
+    res.json(pets);
+  } catch (error) {
+    console.error("Erro ao buscar pets:", error);
+    res.status(500).json({ error: "Erro ao buscar pets" });
+  }
+});
