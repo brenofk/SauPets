@@ -7,12 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ========================
+// Enums
+// ========================
+
+enum Sexo {
+  M
+  F
+}
+
+enum DocumentoTipo {
+  carteira_vacinacao
+  exame
+  receita
+  outro
+}
+
+// Novo enum para o tipo de animal
+enum TipoAnimal {
+  Cachorro
+  Gato
+  Passaro
+  Outro
+}
+
+// ========================
+// Models
+// ========================
+
 model Usuario {
   id            Int       @id @default(autoincrement())
   nome          String
   cpf           String    @unique
   email         String    @unique
-  senha         String    // <- agora é texto puro
+  senha         String    // <- texto puro
   telefone      String?
   data_cadastro DateTime  @default(now())
 
@@ -24,6 +52,7 @@ model Pet {
   id            Int       @id @default(autoincrement())
   usuario_id    Int
   nome          String
+  tipo          TipoAnimal   // <- novo campo usando enum
   sexo          Sexo
   peso          Decimal?
   foto_url      String?
@@ -71,16 +100,4 @@ model Lembrete {
   pet           Pet?      @relation("PetLembretes", fields: [pet_id], references: [id])
 
   @@index([usuario_id, pet_id])
-}
-
-enum Sexo {
-  M
-  F
-}
-
-enum DocumentoTipo {
-  carteira_vacinacao
-  exame
-  receita
-  outro
 }
