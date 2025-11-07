@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
-  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -46,7 +45,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
         setPets(data);
       } catch (error) {
         console.error("Erro ao buscar pets:", error);
-        Alert.alert("Erro", "Não foi possível carregar os pets.");
+        window.alert("❌ Não foi possível carregar os pets.");
       } finally {
         setCarregandoPets(false);
       }
@@ -98,7 +97,8 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
       const petNome =
         pets.find((p) => p.id === Number(selectedPetId))?.nome || "Pet";
 
-      Alert.alert("Sucesso", `Vacina cadastrada com sucesso para ${petNome}!`);
+      // ✅ Exibe mensagem de sucesso no navegador
+      window.alert(`✅ Vacina cadastrada com sucesso para ${petNome}!`);
 
       // Resetar campos
       setSelectedPetId("");
@@ -109,10 +109,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
       setErros({});
     } catch (error) {
       console.error("❌ Erro ao salvar vacina:", error);
-      Alert.alert(
-        "Erro",
-        "Não foi possível cadastrar a vacina. Verifique a conexão com o servidor."
-      );
+      window.alert("⚠️ Não foi possível cadastrar a vacina. Verifique a conexão com o servidor.");
     } finally {
       setLoading(false);
     }
