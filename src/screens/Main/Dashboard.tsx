@@ -17,9 +17,10 @@ import { AuthContext } from "../../contexts/AuthContext"; // ✅ Contexto
 
 type Pet = {
   id: string;
-  name: string;
-  species: string;
-  breed: string;
+  nome: string;
+  tipo: string;
+  sexo?: string;
+  peso?: number;
   created_at: string;
 };
 
@@ -54,51 +55,51 @@ export default function Dashboard({ navigation }: Props) {
 
   // 🔹 Busca dados do dashboard
   useEffect(() => {
-  const fetchDashboardData = async () => {
-    try {
-      if (!user?.id) return;
+    const fetchDashboardData = async () => {
+      try {
+        if (!user?.id) return;
 
-      const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
-      const petsDataRaw = await petsResponse.json();
-      const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
+        // 🔧 Ajuste aqui se a rota correta do backend for /pets/usuario/:id
+        const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
+        const petsDataRaw = await petsResponse.json();
+        const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
 
-      const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
-      const vacinasDataRaw = await vacinasResponse.json();
-      const vacinasData = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
+        const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
+        const vacinasDataRaw = await vacinasResponse.json();
+        const vacinasData = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
 
-      const today = new Date();
-      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const today = new Date();
+        const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-      let upcoming = 0;
-      let overdue = 0;
+        let upcoming = 0;
+        let overdue = 0;
 
-      vacinasData.forEach((v: any) => {
-        const nextDose = new Date(v.proxima_dose);
-        if (nextDose < today) overdue++;
-        else if (nextDose < in30Days) upcoming++;
-      });
+        vacinasData.forEach((v: any) => {
+          const nextDose = new Date(v.proxima_dose);
+          if (nextDose < today) overdue++;
+          else if (nextDose < in30Days) upcoming++;
+        });
 
-      setStats({
-        totalPets: petsData.length,
-        totalVaccines: vacinasData.length,
-        upcomingVaccines: upcoming,
-        overdueVaccines: overdue,
-      });
+        setStats({
+          totalPets: petsData.length,
+          totalVaccines: vacinasData.length,
+          upcomingVaccines: upcoming,
+          overdueVaccines: overdue,
+        });
 
-      setRecentPets(petsData);
-    } catch (error) {
-      console.error("Erro ao carregar dados do dashboard:", error);
-    } finally {
-      setLoadingStats(false);
-      setLoadingPets(false);
-    }
-  };
+        setRecentPets(petsData);
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+      } finally {
+        setLoadingStats(false);
+        setLoadingPets(false);
+      }
+    };
 
-  fetchDashboardData();
-}, [user]);
+    fetchDashboardData();
+  }, [user]);
 
-
-  // 📸 Função corrigida de upload de imagem
+  // 📸 Upload de imagem
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -116,7 +117,7 @@ export default function Dashboard({ navigation }: Props) {
     if (result.canceled || !result.assets?.length) return;
 
     const imageUri = result.assets[0].uri;
-    setProfileImage({ uri: imageUri }); // Mostra a nova imagem imediatamente
+    setProfileImage({ uri: imageUri });
 
     try {
       const formData = new FormData();
@@ -126,21 +127,18 @@ export default function Dashboard({ navigation }: Props) {
         type: "image/jpeg",
       } as any);
 
-      // ✅ Corrigido para usar a rota certa do seu backend
       const response = await fetch(`http://192.168.1.4:3000/upload-profile/${user?.id}`, {
         method: "POST",
         body: formData,
       });
 
       const raw = await response.text();
-      console.log("📡 Raw server response:", raw);
-
       let data;
       try {
         data = JSON.parse(raw);
       } catch (e) {
-        console.error("❌ Server returned non-JSON:", raw);
-        Alert.alert("Erro", "Servidor retornou resposta inválida. Verifique /upload-profile no backend.");
+        console.error("❌ Resposta inválida:", raw);
+        Alert.alert("Erro", "Servidor retornou resposta inválida.");
         return;
       }
 
@@ -148,7 +146,6 @@ export default function Dashboard({ navigation }: Props) {
         setProfileImage({ uri: data.fotoUrl });
         Alert.alert("Sucesso", "Foto de perfil atualizada!");
       } else {
-        console.error("❌ Upload falhou:", data);
         Alert.alert("Erro", data.error || "Falha ao enviar a imagem.");
       }
     } catch (error) {
@@ -157,26 +154,24 @@ export default function Dashboard({ navigation }: Props) {
     }
   };
 
+  // 🚪 Logout
   const handleLogout = async () => {
-  setMenuVisible(false);
-
-  Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
-    { text: "Cancelar", style: "cancel" },
-    {
-      text: "Sair",
-      style: "destructive",
-      onPress: async () => {
-        await signOut(); // Limpa AsyncStorage e estado global
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Login" }], // 🔹 Navega para a tela Login
-        });
+    setMenuVisible(false);
+    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
+        },
       },
-    },
-  ]);
-};
-
-
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
@@ -255,18 +250,16 @@ export default function Dashboard({ navigation }: Props) {
         ) : (
           <FlatList
             data={recentPets}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
                 onPress={() => console.log("Abrir detalhes do pet:", item.id)}
               >
-                <Text style={styles.petName}>{item.name}</Text>
-                <Text style={styles.petInfo}>
-                  {item.species} — {item.breed}
-                </Text>
+                <Text style={styles.petName}>{item.nome}</Text>
+                <Text style={styles.petInfo}>{item.tipo}</Text>
                 <Text style={styles.petDate}>
-                  {new Date(item.created_at).toLocaleDateString()}
+                  {new Date(item.created_at).toLocaleDateString("pt-BR")}
                 </Text>
               </TouchableOpacity>
             )}
