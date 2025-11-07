@@ -96,7 +96,7 @@ app.post("/pets", async (req, res) => {
       data: {
         nome,
         tipo,
-        usuarioId: Number(usuarioId),
+        usuario_id: Number(usuarioId), // ✅ campo correto no schema
       },
     });
 
@@ -113,7 +113,7 @@ app.get("/pets/:usuarioId", async (req, res) => {
     const { usuarioId } = req.params;
 
     const pets = await prisma.pet.findMany({
-      where: { usuarioId: Number(usuarioId) },
+      where: { usuario_id: Number(usuarioId) }, // ✅ campo correto no schema
     });
 
     res.json(pets);
@@ -122,3 +122,30 @@ app.get("/pets/:usuarioId", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar pets" });
   }
 });
+
+// ✅ Rota para listar vacinas de todos os pets de um usuário
+app.get("/vacinas/:usuarioId", async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+
+    // Busca todas as vacinas relacionadas aos pets do usuário
+    const vacinas = await prisma.vacina.findMany({
+      where: {
+        pet: {
+          usuario_id: Number(usuarioId), // usa o relacionamento
+        },
+      },
+      include: {
+        pet: {
+          select: { nome: true },
+        },
+      },
+    });
+
+    res.json(vacinas);
+  } catch (error) {
+    console.error("Erro ao buscar vacinas:", error);
+    res.status(500).json({ error: "Erro ao buscar vacinas" });
+  }
+});
+

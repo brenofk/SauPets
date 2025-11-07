@@ -169,7 +169,7 @@ export default function Dashboard({ navigation }: Props) {
         await signOut(); // Limpa AsyncStorage e estado global
         navigation.reset({
           index: 0,
-          routes: [{ name: "Cadastro" }], // 🔹 Navega para a tela Login
+          routes: [{ name: "Login" }], // 🔹 Navega para a tela Login
         });
       },
     },
