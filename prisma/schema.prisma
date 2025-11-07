@@ -53,7 +53,7 @@ model Pet {
   usuario_id    Int
   nome          String
   tipo          TipoAnimal   // <- novo campo usando enum
-  sexo          Sexo
+  sexo          Sexo?
   peso          Decimal?
   foto_url      String?
 
