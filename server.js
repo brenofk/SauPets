@@ -10,15 +10,17 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// =======================
+// Usuários
+// =======================
+
 // Rota de cadastro
 app.post("/usuarios", async (req, res) => {
   try {
     const { nome, cpf, email, telefone, senha } = req.body;
 
     const usuarioExistente = await prisma.usuario.findFirst({
-      where: {
-        OR: [{ email }, { cpf }],
-      },
+      where: { OR: [{ email }, { cpf }] },
     });
 
     if (usuarioExistente) {
@@ -26,13 +28,7 @@ app.post("/usuarios", async (req, res) => {
     }
 
     const novoUsuario = await prisma.usuario.create({
-      data: {
-        nome,
-        cpf,
-        email,
-        telefone,
-        senha, // texto puro
-      },
+      data: { nome, cpf, email, telefone, senha },
     });
 
     res.json({ id: novoUsuario.id });
@@ -48,7 +44,7 @@ app.post("/login", async (req, res) => {
     const { email, senha } = req.body;
 
     const usuario = await prisma.usuario.findFirst({
-      where: { email, senha }, // senha em texto puro
+      where: { email, senha },
     });
 
     if (!usuario) {
@@ -62,7 +58,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Nova rota: Buscar usuário por ID
+// Buscar usuário por ID
 app.get("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -82,21 +78,23 @@ app.get("/usuarios/:id", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+// =======================
+// Pets
+// =======================
 
-// Rota para cadastrar um pet
+// Cadastrar pet
 app.post("/pets", async (req, res) => {
   try {
-    const { nome, tipo, usuarioId } = req.body;
+    const { nome, tipo, sexo, peso, foto_url, usuarioId } = req.body;
 
     const novoPet = await prisma.pet.create({
       data: {
         nome,
         tipo,
-        usuario_id: Number(usuarioId), // ✅ campo correto no schema
+        sexo: sexo || null,
+        peso: peso !== undefined && peso !== "" ? Number(peso) : null,
+        foto_url: foto_url || null,
+        usuario_id: Number(usuarioId),
       },
     });
 
@@ -107,13 +105,13 @@ app.post("/pets", async (req, res) => {
   }
 });
 
-// Rota para listar pets de um usuário
+// Listar pets de um usuário
 app.get("/pets/:usuarioId", async (req, res) => {
   try {
     const { usuarioId } = req.params;
 
     const pets = await prisma.pet.findMany({
-      where: { usuario_id: Number(usuarioId) }, // ✅ campo correto no schema
+      where: { usuario_id: Number(usuarioId) },
     });
 
     res.json(pets);
@@ -123,16 +121,19 @@ app.get("/pets/:usuarioId", async (req, res) => {
   }
 });
 
-// ✅ Rota para listar vacinas de todos os pets de um usuário
+// =======================
+// Vacinas
+// =======================
+
+// Listar vacinas de todos os pets de um usuário
 app.get("/vacinas/:usuarioId", async (req, res) => {
   try {
     const { usuarioId } = req.params;
 
-    // Busca todas as vacinas relacionadas aos pets do usuário
     const vacinas = await prisma.vacina.findMany({
       where: {
         pet: {
-          usuario_id: Number(usuarioId), // usa o relacionamento
+          usuario_id: Number(usuarioId),
         },
       },
       include: {
@@ -149,3 +150,10 @@ app.get("/vacinas/:usuarioId", async (req, res) => {
   }
 });
 
+// =======================
+// Inicialização do servidor
+// =======================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+});
