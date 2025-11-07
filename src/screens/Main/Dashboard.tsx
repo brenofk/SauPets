@@ -59,7 +59,6 @@ export default function Dashboard({ navigation }: Props) {
       try {
         if (!user?.id) return;
 
-        // 🔧 Ajuste aqui se a rota correta do backend for /pets/usuario/:id
         const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
         const petsDataRaw = await petsResponse.json();
         const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
@@ -103,7 +102,10 @@ export default function Dashboard({ navigation }: Props) {
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert("Permissão necessária", "Você precisa permitir o acesso à galeria para escolher uma foto.");
+      Alert.alert(
+        "Permissão necessária",
+        "Você precisa permitir o acesso à galeria para escolher uma foto."
+      );
       return;
     }
 
@@ -127,10 +129,13 @@ export default function Dashboard({ navigation }: Props) {
         type: "image/jpeg",
       } as any);
 
-      const response = await fetch(`http://192.168.1.4:3000/upload-profile/${user?.id}`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://192.168.1.4:3000/upload-profile/${user?.id}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const raw = await response.text();
       let data;
@@ -258,9 +263,6 @@ export default function Dashboard({ navigation }: Props) {
               >
                 <Text style={styles.petName}>{item.nome}</Text>
                 <Text style={styles.petInfo}>{item.tipo}</Text>
-                <Text style={styles.petDate}>
-                  {new Date(item.created_at).toLocaleDateString("pt-BR")}
-                </Text>
               </TouchableOpacity>
             )}
           />
@@ -406,11 +408,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 2,
-  },
-  petDate: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
   },
   overlay: {
     flex: 1,
