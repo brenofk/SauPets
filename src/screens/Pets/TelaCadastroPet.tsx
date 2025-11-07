@@ -9,10 +9,10 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useNavigation } from "@react-navigation/native"; // 👈 importar o hook
+import { useNavigation } from "@react-navigation/native";
 
 const TelaCadastroPet = () => {
-  const navigation = useNavigation(); // 👈 inicializar navegação
+  const navigation = useNavigation();
   const [nomePet, setNomePet] = useState("");
   const [tipoAnimal, setTipoAnimal] = useState("");
   const [erroNome, setErroNome] = useState(false);
@@ -43,11 +43,9 @@ const TelaCadastroPet = () => {
     setTipoAnimal("");
     setErroNome(false);
     setErroTipo(false);
-  };
 
-  // 👇 Função para ir até o Dashboard
-  const irParaDashboard = () => {
-    navigation.navigate("Dashboard" as never); // o nome da tela deve bater com o que você registrou nas rotas
+    // Volta para a tela anterior (Dashboard)
+    navigation.goBack();
   };
 
   return (
@@ -57,21 +55,13 @@ const TelaCadastroPet = () => {
         <TextInput
           placeholder="hunter"
           placeholderTextColor="#777"
-          style={[
-            styles.input,
-            erroNome && { borderColor: "#E53935", borderWidth: 2 },
-          ]}
+          style={[styles.input, erroNome && { borderColor: "#E53935", borderWidth: 2 }]}
           value={nomePet}
           onChangeText={setNomePet}
         />
 
         <Text style={styles.label}>Escolha o tipo de animal</Text>
-        <View
-          style={[
-            styles.pickerContainer,
-            erroTipo && { borderColor: "#E53935", borderWidth: 2 },
-          ]}
-        >
+        <View style={[styles.pickerContainer, erroTipo && { borderColor: "#E53935", borderWidth: 2 }]}>
           <Picker
             selectedValue={tipoAnimal}
             onValueChange={(itemValue) => setTipoAnimal(itemValue)}
@@ -89,14 +79,6 @@ const TelaCadastroPet = () => {
         >
           <Text style={styles.botaoTexto}>Cadastrar pet</Text>
         </TouchableOpacity>
-
-        {/* 👇 Botão de navegação para Dashboard */}
-        <TouchableOpacity
-          style={[styles.botao, styles.botaoSecundario]}
-          onPress={irParaDashboard}
-        >
-          <Text style={styles.botaoTexto}>Início</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -104,7 +86,6 @@ const TelaCadastroPet = () => {
 
 export default TelaCadastroPet;
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -161,9 +142,6 @@ const styles = StyleSheet.create({
   },
   botaoPrimario: {
     backgroundColor: "#4CAF50",
-  },
-  botaoSecundario: {
-    backgroundColor: "#A5D6A7",
   },
   botaoTexto: {
     color: "#fff",
