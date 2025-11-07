@@ -26,14 +26,16 @@ type Props = {
 export default function TelaCadastroVacinas({ navigation }: Props) {
   const { user } = useContext(AuthContext);
   const [pets, setPets] = useState<{ id: number; nome: string }[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState<string>(""); // ✅ string vazia
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
   const [vacina, setVacina] = useState("");
   const [dataAplicacao, setDataAplicacao] = useState("");
   const [dataReforco, setDataReforco] = useState("");
   const [veterinario, setVeterinario] = useState("");
   const [loading, setLoading] = useState(false);
   const [carregandoPets, setCarregandoPets] = useState(true);
+  const [erros, setErros] = useState<{ pet?: string; vacina?: string; data?: string }>({});
 
+  // Buscar pets do usuário logado
   useEffect(() => {
     const fetchPets = async () => {
       if (!user) return;
@@ -53,26 +55,32 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
     fetchPets();
   }, [user]);
 
+  // Função para salvar vacina
   const handleSalvar = async () => {
-    if (!selectedPetId) {
-      Alert.alert("Atenção", "Selecione um pet antes de salvar a vacina.");
-      return;
-    }
+    const novosErros: { pet?: string; vacina?: string; data?: string } = {};
 
-    if (!vacina.trim()) {
-      Alert.alert("Atenção", "Digite o nome da vacina.");
+    if (!selectedPetId) novosErros.pet = "Selecione um pet.";
+    if (!vacina.trim()) novosErros.vacina = "Informe o nome da vacina.";
+    if (!dataAplicacao.trim()) novosErros.data = "Informe a data de aplicação.";
+
+    setErros(novosErros);
+
+    if (Object.keys(novosErros).length > 0) {
       return;
     }
 
     setLoading(true);
+
     try {
       const novaVacina = {
         pet_id: Number(selectedPetId),
-        nome_vacina: vacina,
+        nome_vacina: vacina.trim(),
         data_aplicacao: dataAplicacao || null,
         data_reforco: dataReforco || null,
         veterinario: veterinario || null,
       };
+
+      console.log("📦 Enviando vacina:", novaVacina);
 
       const response = await fetch("http://192.168.1.4:3000/vacinas", {
         method: "POST",
@@ -80,18 +88,31 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
         body: JSON.stringify(novaVacina),
       });
 
-      if (!response.ok) throw new Error("Erro ao cadastrar vacina");
+      const data = await response.json();
+      console.log("📥 Resposta do servidor:", data);
 
-      Alert.alert("Sucesso", "Vacina cadastrada com sucesso!");
-      // Resetando campos
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao cadastrar vacina");
+      }
+
+      const petNome =
+        pets.find((p) => p.id === Number(selectedPetId))?.nome || "Pet";
+
+      Alert.alert("Sucesso", `Vacina cadastrada com sucesso para ${petNome}!`);
+
+      // Resetar campos
       setSelectedPetId("");
       setVacina("");
       setDataAplicacao("");
       setDataReforco("");
       setVeterinario("");
+      setErros({});
     } catch (error) {
-      console.error(error);
-      Alert.alert("Erro", "Não foi possível cadastrar a vacina.");
+      console.error("❌ Erro ao salvar vacina:", error);
+      Alert.alert(
+        "Erro",
+        "Não foi possível cadastrar a vacina. Verifique a conexão com o servidor."
+      );
     } finally {
       setLoading(false);
     }
@@ -111,7 +132,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
                 onValueChange={(itemValue) => setSelectedPetId(itemValue)}
                 style={styles.picker}
               >
-                <Picker.Item label="Selecione..." value="" /> {/* ✅ string vazia */}
+                <Picker.Item label="Selecione..." value="" />
                 {pets.map((pet) => (
                   <Picker.Item
                     key={pet.id}
@@ -121,6 +142,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
                 ))}
               </Picker>
             </View>
+            {erros.pet && <Text style={styles.erroTexto}>{erros.pet}</Text>}
 
             <Text style={styles.label}>Nome da Vacina</Text>
             <TextInput
@@ -130,6 +152,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
               value={vacina}
               onChangeText={setVacina}
             />
+            {erros.vacina && <Text style={styles.erroTexto}>{erros.vacina}</Text>}
 
             <Text style={styles.label}>Data de Aplicação</Text>
             <TextInput
@@ -139,6 +162,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
               value={dataAplicacao}
               onChangeText={setDataAplicacao}
             />
+            {erros.data && <Text style={styles.erroTexto}>{erros.data}</Text>}
 
             <Text style={styles.label}>Data de Reforço (opcional)</Text>
             <TextInput
@@ -183,6 +207,9 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
   );
 }
 
+// =====================
+// 🎨 Estilos
+// =====================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -217,19 +244,24 @@ const styles = StyleSheet.create({
     borderColor: "#A5D6A7",
     fontSize: 14,
     color: "#333",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: "#A5D6A7",
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 10,
     backgroundColor: "#fff",
     overflow: "hidden",
   },
   picker: {
     height: Platform.OS === "ios" ? 150 : 50,
     width: "100%",
+  },
+  erroTexto: {
+    color: "red",
+    fontSize: 13,
+    marginBottom: 10,
   },
   botao: {
     paddingVertical: 14,
