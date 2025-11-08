@@ -259,7 +259,7 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() => console.log("Abrir detalhes do pet:", item.id)}
+                onPress={() => navigation.navigate("InfoPet", { petId: item.id.toString() })}
               >
                 <Text style={styles.petName}>{item.nome}</Text>
                 <Text style={styles.petInfo}>{item.tipo}</Text>

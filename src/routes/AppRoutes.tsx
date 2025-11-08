@@ -5,8 +5,8 @@ import { AuthContext } from "../contexts/AuthContext"; // Ajuste o caminho confo
 import Login from "../screens/Auth/Login";
 import Cadastro from "../screens/Auth/Cadastro";
 import Dashboard from "../screens/Main/Dashboard";
-import TelaCadastroPet from "../screens/Pets/TelaCadastroPet"; // Importe sua tela de cadastro de pet
-import TelaCadastroVacinas from "../screens/Pets/TelaCadastroVacinas"; // Importe sua tela de cadastro de vacinas
+import TelaCadastroPet from "../screens/Pets/TelaCadastroPet";
+import TelaCadastroVacinas from "../screens/Pets/TelaCadastroVacinas";
 
 // Tipos de rotas
 export type RootStackParamList = {
@@ -15,6 +15,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   TelaCadastroPet: undefined;
   TelaCadastroVacinas: undefined;
+  InfoPet: { petId: string }; // Parametro necessário para abrir a tela de detalhes
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,6 +42,7 @@ export default function AppRoutes() {
           <Stack.Screen name="Dashboard" component={Dashboard} />
           <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
           <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
+         
         </>
       ) : (
         // Usuário deslogado
