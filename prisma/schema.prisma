@@ -23,7 +23,6 @@ enum DocumentoTipo {
   outro
 }
 
-// Novo enum para o tipo de animal
 enum TipoAnimal {
   Cachorro
   Gato
@@ -40,26 +39,26 @@ model Usuario {
   nome          String
   cpf           String    @unique
   email         String    @unique
-  senha         String    // <- texto puro
+  senha         String
   telefone      String?
   data_cadastro DateTime  @default(now())
 
-  pets          Pet[]     @relation("UsuarioPets")
-  lembretes     Lembrete[] @relation("UsuarioLembretes")
+  pets          Pet[]       @relation("UsuarioPets")
+  lembretes     Lembrete[]  @relation("UsuarioLembretes")
 }
 
 model Pet {
   id            Int       @id @default(autoincrement())
   usuario_id    Int
   nome          String
-  tipo          TipoAnimal   // <- novo campo usando enum
+  tipo          TipoAnimal
   sexo          Sexo?
   peso          Decimal?
   foto_url      String?
 
-  usuario       Usuario   @relation("UsuarioPets", fields: [usuario_id], references: [id])
-  vacinas       Vacina[]
-  documentos    Documento[]
+  usuario       Usuario   @relation("UsuarioPets", fields: [usuario_id], references: [id], onDelete: Cascade)
+  vacinas       Vacina[]  @relation("PetVacinas")
+  documentos    Documento[] @relation("PetDocumentos")
   lembretes     Lembrete[] @relation("PetLembretes")
 
   @@index([usuario_id])
@@ -73,7 +72,7 @@ model Vacina {
   data_reforco  DateTime?
   veterinario   String?
 
-  pet           Pet       @relation(fields: [pet_id], references: [id])
+  pet           Pet       @relation("PetVacinas", fields: [pet_id], references: [id], onDelete: Cascade)
 }
 
 model Documento {
@@ -84,7 +83,7 @@ model Documento {
   arquivo_url   String
   data_upload   DateTime @default(now())
 
-  pet           Pet       @relation(fields: [pet_id], references: [id])
+  pet           Pet       @relation("PetDocumentos", fields: [pet_id], references: [id], onDelete: Cascade)
 }
 
 model Lembrete {
@@ -96,8 +95,8 @@ model Lembrete {
   data_evento   DateTime
   notificado    Boolean   @default(false)
 
-  usuario       Usuario   @relation("UsuarioLembretes", fields: [usuario_id], references: [id])
-  pet           Pet?      @relation("PetLembretes", fields: [pet_id], references: [id])
+  usuario       Usuario   @relation("UsuarioLembretes", fields: [usuario_id], references: [id], onDelete: Cascade)
+  pet           Pet?      @relation("PetLembretes", fields: [pet_id], references: [id], onDelete: Cascade)
 
   @@index([usuario_id, pet_id])
 }

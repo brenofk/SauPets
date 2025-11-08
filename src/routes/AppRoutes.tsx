@@ -38,20 +38,14 @@ export default function AppRoutes() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <>
-          <Stack.Screen name="Dashboard" component={Dashboard} />
-          <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
-          <Stack.Screen name="TelaAlterarInfoUser" component={TelaAlterarInfoUser} />
-          <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
-          <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Cadastro" component={Cadastro} />
-        </>
-      )}
+      {/* Todas as telas estão registradas */}
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Cadastro" component={Cadastro} />
+      <Stack.Screen name="Dashboard" component={Dashboard} />
+      <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
+      <Stack.Screen name="TelaAlterarInfoUser" component={TelaAlterarInfoUser} />
+      <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
+      <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
     </Stack.Navigator>
   );
 }
