@@ -282,7 +282,7 @@ export default function Dashboard({ navigation }: Props) {
             style={styles.menuItem}
             onPress={() => {
               setMenuVisible(false);
-              navigation.navigate("Configuracao");
+              navigation.navigate("TelaConfiguracao");
             }}
           >
             <Ionicons name="settings-outline" size={22} color="#1B5E20" />
