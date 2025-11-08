@@ -7,6 +7,8 @@ import Cadastro from "../screens/Auth/Cadastro";
 import Dashboard from "../screens/Main/Dashboard";
 import TelaCadastroPet from "../screens/Pets/TelaCadastroPet";
 import TelaCadastroVacinas from "../screens/Pets/TelaCadastroVacinas";
+import TelaConfiguracao from "../screens/Main/TelaConfiguracao";
+
 
 // Tipos de rotas
 export type RootStackParamList = {
@@ -15,6 +17,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   TelaCadastroPet: undefined;
   TelaCadastroVacinas: undefined;
+  TelaConfiguracao: undefined;
   InfoPet: { petId: string }; // Parametro necessário para abrir a tela de detalhes
 };
 
@@ -42,7 +45,7 @@ export default function AppRoutes() {
           <Stack.Screen name="Dashboard" component={Dashboard} />
           <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
           <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
-         
+          <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
         </>
       ) : (
         // Usuário deslogado
