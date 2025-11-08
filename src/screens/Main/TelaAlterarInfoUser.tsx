@@ -1,16 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
   Alert,
+  ScrollView,
 } from "react-native";
-import { AuthContext } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext"; // usa o hook personalizado
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../routes/AppRoutes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -19,14 +17,14 @@ type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 
 export default function TelaAlterarInfoUser() {
   const navigation = useNavigation<NavigationProps>();
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useAuth(); // ✅ pega updateUser, não setUser
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  // 🔹 Carrega os dados do usuário ao abrir a tela
   useEffect(() => {
     if (user?.id) {
       fetch(`http://localhost:3000/usuarios/${user.id}`)
@@ -38,28 +36,17 @@ export default function TelaAlterarInfoUser() {
           setSenha(data.senha || "");
         })
         .catch(() => {
-          showAlert("Erro", "Não foi possível carregar seus dados.");
+          Alert.alert("Erro", "Não foi possível carregar seus dados.");
         });
     }
   }, [user]);
 
-  // 🔔 Função que mostra alert em web e mobile
-  const showAlert = (title: string, message: string, onOk?: () => void) => {
-    if (Platform.OS === "web") {
-      window.alert(`${title}\n\n${message}`);
-      if (onOk) onOk();
-    } else {
-      Alert.alert(title, message, [{ text: "OK", onPress: onOk }]);
-    }
-  };
-
+  // 🔹 Atualiza as informações do usuário
   const handleSalvar = async () => {
     if (!nome || !email || !telefone || !senha) {
-      showAlert("Atenção", "Preencha todos os campos.");
+      Alert.alert("Atenção", "Preencha todos os campos.");
       return;
     }
-
-    setLoading(true);
 
     try {
       const response = await fetch(`http://localhost:3000/usuarios/${user?.id}`, {
@@ -71,17 +58,21 @@ export default function TelaAlterarInfoUser() {
       });
 
       if (response.ok) {
-        showAlert("Sucesso", "Informações atualizadas com sucesso!", () => {
-          navigation.navigate("TelaConfiguracao");
+        // ✅ Atualiza o contexto usando updateUser
+        await updateUser({
+          name: nome,       // observe que o AuthContext usa "name", não "nome"
+          email,
+          // telefone e senha não estão no tipo User, então só atualize se quiser adaptar o tipo
         });
+
+        Alert.alert("Sucesso", "Informações atualizadas com sucesso!");
+        navigation.navigate("TelaConfiguracao");
       } else {
-        showAlert("Erro", "Não foi possível atualizar as informações.");
+        Alert.alert("Erro", "Não foi possível atualizar as informações.");
       }
     } catch (error) {
       console.error(error);
-      showAlert("Erro", "Erro de conexão com o servidor.");
-    } finally {
-      setLoading(false);
+      Alert.alert("Erro", "Erro de conexão com o servidor.");
     }
   };
 
@@ -124,16 +115,8 @@ export default function TelaAlterarInfoUser() {
         secureTextEntry
       />
 
-      <TouchableOpacity
-        style={[styles.botaoSalvar, loading && { opacity: 0.7 }]}
-        onPress={handleSalvar}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.textoBotao}>Salvar alterações</Text>
-        )}
+      <TouchableOpacity style={styles.botaoSalvar} onPress={handleSalvar}>
+        <Text style={styles.textoBotao}>Salvar alterações</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -146,6 +129,7 @@ export default function TelaAlterarInfoUser() {
   );
 }
 
+// 🎨 Estilos (mantidos)
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,

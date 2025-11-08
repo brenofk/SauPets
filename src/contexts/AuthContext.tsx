@@ -13,6 +13,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (user: Partial<User>) => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -20,6 +21,7 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => {},
   signOut: async () => {},
+  updateUser: async () => {},
 });
 
 type AuthProviderProps = {
@@ -30,6 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Função de login
   const signIn = async (email: string, password: string) => {
     try {
       const response = await fetch("http://192.168.1.4:3000/login", {
@@ -40,6 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const data = await response.json();
       console.log("🔍 Resposta do backend:", data);
+
       if (!response.ok) {
         throw new Error(data.error || "Falha no login");
       }
@@ -47,9 +51,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const userData: User = {
         id: String(data.id),
         name: data.nome,
-        email: data.email || "", // se o backend não retornar email, evita erro
+        email: data.email || "",
         foto_perfil: data.foto_perfil || null,
-};
+      };
 
       const token = data.token;
 
@@ -62,12 +66,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // 🔹 Função de logout
   const signOut = async () => {
     setUser(null);
     await AsyncStorage.multiRemove(["@MyApp:user", "@MyApp:token"]);
   };
 
-  // Carrega o usuário do AsyncStorage e valida no backend
+  // 🔹 Função para atualizar dados do usuário
+  const updateUser = async (updatedFields: Partial<User>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...updatedFields };
+    setUser(updatedUser);
+    await AsyncStorage.setItem("@MyApp:user", JSON.stringify(updatedUser));
+  };
+
+  // 🔹 Carrega o usuário do AsyncStorage e valida com backend
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -75,22 +88,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const token = await AsyncStorage.getItem("@MyApp:token");
 
         if (storedUser && token) {
-          // Faz uma requisição para verificar se o usuário ainda existe
           const parsedUser: User = JSON.parse(storedUser);
+
+          // Busca dados atualizados do backend
           const response = await fetch(`http://192.168.1.4:3000/usuarios/${parsedUser.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
           if (!response.ok) {
-            // Usuário não existe mais -> força logout
+            // Usuário inválido ou token expirado
             await signOut();
           } else {
-            setUser(parsedUser); // mantém o login
+            const data = await response.json();
+            const updatedUser: User = {
+              id: String(data.id),
+              name: data.nome,
+              email: data.email || "",
+              foto_perfil: data.foto_perfil || null,
+            };
+            setUser(updatedUser);
+            await AsyncStorage.setItem("@MyApp:user", JSON.stringify(updatedUser));
           }
         }
       } catch (error) {
         console.error("Erro ao validar usuário:", error);
-        await signOut(); // se houver erro, limpa login
+        await signOut();
       } finally {
         setLoading(false);
       }
@@ -100,12 +122,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// 🔹 Hook personalizado
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
