@@ -1,24 +1,26 @@
 import React, { useContext } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { AuthContext } from "../contexts/AuthContext"; // Ajuste o caminho conforme necessário
+import { AuthContext } from "../contexts/AuthContext";
+
+// Telas
 import Login from "../screens/Auth/Login";
 import Cadastro from "../screens/Auth/Cadastro";
 import Dashboard from "../screens/Main/Dashboard";
+import TelaConfiguracao from "../screens/Main/TelaConfiguracao";
+import TelaAlterarInfoUser from "../screens/Main/TelaAlterarInfoUser";
 import TelaCadastroPet from "../screens/Pets/TelaCadastroPet";
 import TelaCadastroVacinas from "../screens/Pets/TelaCadastroVacinas";
-import TelaConfiguracao from "../screens/Main/TelaConfiguracao";
 
-
-// Tipos de rotas
 export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined;
   Dashboard: undefined;
+  TelaConfiguracao: undefined;
+  TelaAlterarInfoUser: undefined;
   TelaCadastroPet: undefined;
   TelaCadastroVacinas: undefined;
-  TelaConfiguracao: undefined;
-  InfoPet: { petId: string }; // Parametro necessário para abrir a tela de detalhes
+  InfoPet: { petId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,26 +31,22 @@ export default function AppRoutes() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#4CAF50" />
       </View>
     );
   }
 
   return (
-    <Stack.Navigator
-      screenOptions={{ headerShown: false }}
-      initialRouteName={user ? "Dashboard" : "Login"}
-    >
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        // Usuário logado
         <>
           <Stack.Screen name="Dashboard" component={Dashboard} />
+          <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
+          <Stack.Screen name="TelaAlterarInfoUser" component={TelaAlterarInfoUser} />
           <Stack.Screen name="TelaCadastroPet" component={TelaCadastroPet} />
           <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
-          <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
         </>
       ) : (
-        // Usuário deslogado
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Cadastro" component={Cadastro} />
@@ -63,5 +61,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#DDF3E0",
   },
 });

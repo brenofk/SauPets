@@ -17,8 +17,9 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function TelaConfiguracao() {
   const navigation = useNavigation<NavigationProp>();
 
+  // ✅ Agora o botão "Alterar dados" realmente navega
   const handleAlterarDados = () => {
-    Alert.alert("Em breve", "A funcionalidade de alterar dados ainda será implementada.");
+    navigation.navigate("TelaAlterarInfoUser");
   };
 
   const handleExcluirConta = () => {
