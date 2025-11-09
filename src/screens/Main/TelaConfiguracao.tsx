@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, CommonActions } from "@react-navigation/native";
@@ -19,25 +20,32 @@ export default function TelaConfiguracao() {
   const navigation = useNavigation<NavigationProp>();
   const { user, signOut } = useContext(AuthContext);
 
-  // ✅ Navegar para TelaAlterarInfoUser
+  // Navegar para TelaAlterarInfoUser
   const handleAlterarDados = () => {
     navigation.navigate("TelaAlterarInfoUser");
   };
 
-  // ✅ Excluir conta
+  // Excluir conta
   const handleExcluirConta = async () => {
-    // Confirmação compatível com web e mobile
     const confirmed =
       Platform.OS === "web"
         ? window.confirm("Tem certeza que deseja excluir sua conta?")
-        : confirm("Tem certeza que deseja excluir sua conta?"); // mobile pode usar Alert ou confirm
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert(
+              "Excluir conta",
+              "Tem certeza que deseja excluir sua conta?",
+              [
+                { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+                { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
+              ]
+            );
+          });
 
     if (!confirmed) return;
 
     try {
       if (!user?.id) return;
 
-      // URL do backend: localhost para web, IP local para mobile
       const backendURL =
         Platform.OS === "web"
           ? "http://localhost:3000"
@@ -49,15 +57,12 @@ export default function TelaConfiguracao() {
 
       if (response.ok) {
         await signOut();
-
-        // 🔹 Reset da navegação usando CommonActions
         navigation.dispatch(
           CommonActions.reset({
             index: 0,
             routes: [{ name: "Login" }],
           })
         );
-
         if (Platform.OS === "web") alert("Conta excluída com sucesso!");
         else console.log("Conta excluída com sucesso!");
       } else {
@@ -115,7 +120,7 @@ export default function TelaConfiguracao() {
   );
 }
 
-// 🎨 Estilos
+// Estilos
 const styles = StyleSheet.create({
   background: {
     flex: 1,

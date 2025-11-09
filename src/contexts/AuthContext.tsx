@@ -5,7 +5,6 @@ type User = {
   id: string;
   name: string;
   email: string;
-  foto_perfil?: string | null;
 };
 
 type AuthContextType = {
@@ -52,7 +51,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: String(data.id),
         name: data.nome,
         email: data.email || "",
-        foto_perfil: data.foto_perfil || null,
       };
 
       setUser(userData);

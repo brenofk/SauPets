@@ -2,36 +2,13 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import path from "path";
-import multer from "multer";
-import fs from "fs";
-import { fileURLToPath } from "url"; // <-- necessário para __dirname
-
-// 🔹 Definir __dirname em ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const prisma = new PrismaClient();
 
-// Cria a pasta uploads caso não exista
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(uploadDir));
-
-// Configuração do multer para upload de fotos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `profile_${req.params.id}${ext}`);
-  },
-});
-const upload = multer({ storage });
 
 // =======================
 // Usuários
@@ -72,7 +49,7 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou senha incorretos." });
     }
 
-    res.json({ id: usuario.id, nome: usuario.nome, email: usuario.email, foto_perfil: usuario.foto_perfil });
+    res.json({ id: usuario.id, nome: usuario.nome, email: usuario.email });
   } catch (error) {
     console.error("❌ Erro ao fazer login:", error);
     res.status(500).json({ error: "Erro ao fazer login" });
@@ -97,11 +74,11 @@ app.get("/usuarios/:id", async (req, res) => {
   }
 });
 
-// Atualizar dados do usuário (incluindo foto_perfil)
+// Atualizar dados do usuário
 app.put("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, email, telefone, senha, foto_perfil } = req.body;
+    const { nome, email, telefone, senha } = req.body;
 
     const usuarioExistente = await prisma.usuario.findUnique({ where: { id: Number(id) } });
 
@@ -114,7 +91,6 @@ app.put("/usuarios/:id", async (req, res) => {
         email: email ?? usuarioExistente.email,
         telefone: telefone ?? usuarioExistente.telefone,
         senha: senha ?? usuarioExistente.senha,
-        foto_perfil: foto_perfil ?? usuarioExistente.foto_perfil,
       },
     });
 
@@ -122,27 +98,6 @@ app.put("/usuarios/:id", async (req, res) => {
   } catch (error) {
     console.error("❌ Erro ao atualizar usuário:", error);
     res.status(500).json({ error: "Erro ao atualizar usuário" });
-  }
-});
-
-// Upload de foto de perfil
-app.post("/usuarios/:id/upload-profile", upload.single("foto"), async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!req.file) return res.status(400).json({ error: "Nenhuma foto enviada." });
-
-    const fotoUrl = `http://localhost:3000/uploads/${req.file.filename}`;
-
-    await prisma.usuario.update({
-      where: { id: Number(id) },
-      data: { foto_perfil: fotoUrl },
-    });
-
-    res.json({ fotoUrl });
-  } catch (error) {
-    console.error("❌ Erro ao enviar foto de perfil:", error);
-    res.status(500).json({ error: "Erro ao enviar foto de perfil" });
   }
 });
 
@@ -168,7 +123,7 @@ app.delete("/usuarios/:id", async (req, res) => {
 // =======================
 app.post("/pets", async (req, res) => {
   try {
-    const { nome, tipo, sexo, peso, foto_url, usuarioId } = req.body;
+    const { nome, tipo, sexo, peso, usuarioId } = req.body;
 
     const novoPet = await prisma.pet.create({
       data: {
@@ -176,7 +131,6 @@ app.post("/pets", async (req, res) => {
         tipo,
         sexo: sexo || null,
         peso: peso !== undefined && peso !== "" ? Number(peso) : null,
-        foto_url: foto_url || null,
         usuario_id: Number(usuarioId),
       },
     });

@@ -41,13 +41,11 @@ model Usuario {
   email         String    @unique
   senha         String
   telefone      String?
-  foto_perfil   String?   // novo campo
   data_cadastro DateTime  @default(now())
 
   pets          Pet[]       @relation("UsuarioPets")
   lembretes     Lembrete[]  @relation("UsuarioLembretes")
 }
-
 
 model Pet {
   id            Int       @id @default(autoincrement())

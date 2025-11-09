@@ -7,11 +7,9 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
-  Image,
   Modal,
   Alert,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../../contexts/AuthContext"; // Contexto
 
@@ -36,7 +34,7 @@ type Props = {
 };
 
 export default function Dashboard({ navigation }: Props) {
-  const { user, signOut, updateUser } = useContext(AuthContext);
+  const { user, signOut } = useContext(AuthContext);
   const [stats, setStats] = useState<Stats>({
     totalPets: 0,
     totalVaccines: 0,
@@ -47,14 +45,6 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState<{ uri?: string }>({});
-
-  // 🔹 Sincroniza a foto de perfil com o user do contexto
-  useEffect(() => {
-    if (user?.foto_perfil) {
-      setProfileImage({ uri: user.foto_perfil });
-    }
-  }, [user]);
 
   // 🔹 Busca dados do dashboard
   useEffect(() => {
@@ -103,69 +93,6 @@ export default function Dashboard({ navigation }: Props) {
     fetchDashboardData();
   }, [user]);
 
-  // 📸 Upload de imagem
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert(
-        "Permissão necessária",
-        "Você precisa permitir o acesso à galeria para escolher uma foto."
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (result.canceled || !result.assets?.length) return;
-
-    const imageUri = result.assets[0].uri;
-    setProfileImage({ uri: imageUri });
-
-    try {
-      const formData = new FormData();
-      formData.append("foto", {
-        uri: imageUri,
-        name: `profile_${user?.id || "unknown"}.jpg`,
-        type: "image/jpeg",
-      } as any);
-
-      // ⚠️ Corrigido o endpoint
-      const response = await fetch(
-        `http://192.168.1.4:3000/usuarios/${user?.id}/upload-profile`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const raw = await response.text();
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        console.error("❌ Resposta inválida:", raw);
-        Alert.alert("Erro", "Servidor retornou resposta inválida.");
-        return;
-      }
-
-      if (response.ok && data.fotoUrl) {
-        setProfileImage({ uri: data.fotoUrl });
-        updateUser({ ...user, foto_perfil: data.fotoUrl });
-        Alert.alert("Sucesso", "Foto de perfil atualizada!");
-      } else {
-        Alert.alert("Erro", data.error || "Falha ao enviar a imagem.");
-      }
-    } catch (error) {
-      console.error("Erro ao enviar foto:", error);
-      Alert.alert("Erro", "Não foi possível enviar a imagem ao servidor.");
-    }
-  };
-
   // 🚪 Logout compatível Web/Mobile
   const handleLogout = async () => {
     setMenuVisible(false);
@@ -200,16 +127,9 @@ export default function Dashboard({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Cabeçalho */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={pickImage} style={styles.profileButton}>
-            <Image
-              source={
-                profileImage.uri && profileImage.uri.startsWith("http")
-                  ? { uri: profileImage.uri }
-                  : require("../../assets/perfil.jpg")
-              }
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+          <View style={styles.profileButton}>
+            <Ionicons name="person-circle-outline" size={50} color="#4CAF50" />
+          </View>
 
           <Text style={styles.headerText}>
             Olá, {user?.name || user?.email || "Usuário"}
@@ -326,7 +246,7 @@ export default function Dashboard({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { backgroundColor: "#DDF3E0", padding: 20, paddingBottom: 40, flexGrow: 1 },
   headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 25 },
-  profileButton: { width: 55, height: 55, borderRadius: 30, overflow: "hidden", borderWidth: 2, borderColor: "#4CAF50" },
+  profileButton: { width: 55, height: 55, borderRadius: 30, alignItems: "center", justifyContent: "center" },
   profileImage: { width: "100%", height: "100%", resizeMode: "cover" },
   headerText: { fontSize: 22, fontWeight: "bold", color: "#1B5E20", maxWidth: "60%" },
   menuButton: { backgroundColor: "transparent", padding: 6, borderRadius: 50 },
