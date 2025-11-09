@@ -165,22 +165,60 @@ export default function Dashboard({ navigation }: Props) {
 
       const updatedPet = await response.json();
 
-      // Atualiza state local
-      setRecentPets((prev) =>
-        prev.map((p) => (p.id === selectedPet.id ? updatedPet : p))
+      setRecentPets(prev =>
+        prev.map(p => (p.id === selectedPet.id ? updatedPet : p))
       );
       setSelectedPet(updatedPet);
       setEditModalVisible(false);
 
-      // ✅ Alerta de sucesso
       if (typeof window !== "undefined") {
-        window.alert("Pet atualizado com sucesso!");
+        alert("Pet atualizado com sucesso!");
       } else {
         Alert.alert("Sucesso", "Pet atualizado com sucesso!");
       }
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Não foi possível atualizar o pet.");
+    }
+  };
+
+  // Excluir pet
+  const deletePet = async () => {
+    if (!selectedPet) return;
+
+    const confirmDelete = typeof window !== "undefined"
+      ? window.confirm("Deseja realmente excluir este pet?")
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            "Excluir Pet",
+            "Deseja realmente excluir este pet?",
+            [
+              { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+              { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
+            ]
+          );
+        });
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Erro ao deletar pet");
+
+      setRecentPets(prev => prev.filter(p => p.id !== selectedPet.id));
+      setModalVisible(false);
+
+      if (typeof window !== "undefined") {
+        alert("Pet excluído com sucesso!");
+      } else {
+        Alert.alert("Sucesso", "Pet excluído com sucesso!");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Não foi possível excluir o pet.");
     }
   };
 
@@ -297,34 +335,7 @@ export default function Dashboard({ navigation }: Props) {
 
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#E53935" }]}
-                onPress={async () => {
-                  if (!selectedPet) return;
-                  Alert.alert(
-                    "Excluir Pet",
-                    "Deseja realmente excluir este pet?",
-                    [
-                      { text: "Cancelar", style: "cancel" },
-                      {
-                        text: "Excluir",
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
-                              method: "DELETE",
-                            });
-                            Alert.alert("Sucesso", "Pet excluído!");
-                            setRecentPets((prev) =>
-                              prev.filter((p) => p.id !== selectedPet.id)
-                            );
-                            setModalVisible(false);
-                          } catch (error) {
-                            Alert.alert("Erro", "Não foi possível excluir o pet.");
-                          }
-                        },
-                      },
-                    ]
-                  );
-                }}
+                onPress={deletePet}
               >
                 <Text style={styles.modalButtonText}>Excluir</Text>
               </TouchableOpacity>
@@ -437,7 +448,7 @@ export default function Dashboard({ navigation }: Props) {
   );
 }
 
-// Estilos
+// Estilos (mantidos do seu original)
 const styles = StyleSheet.create({
   container: { backgroundColor: "#DDF3E0", padding: 20, paddingBottom: 40, flexGrow: 1 },
   headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 25 },
@@ -465,8 +476,8 @@ const styles = StyleSheet.create({
   modalButtonText: { color: "#fff", fontWeight: "bold" },
   input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8, marginBottom: 10 },
   pickerContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, marginBottom: 10 },
-  sideMenu: { position: "absolute", top: 0, right: 0, width: "60%", height: "100%", backgroundColor: "#E8F5E9", padding: 20, borderTopLeftRadius: 12, borderBottomLeftRadius: 12 },
-  menuTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 20, color: "#1B5E20" },
-  menuItem: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  menuText: { fontSize: 16, marginLeft: 10 },
+  sideMenu: { position: "absolute", top: 0, left: 0, bottom: 0, width: "70%", backgroundColor: "#fff", padding: 20 },
+  menuTitle: { fontSize: 22, fontWeight: "bold", marginBottom: 20, color: "#1B5E20" },
+  menuItem: { flexDirection: "row", alignItems: "center", marginBottom: 15, gap: 10 },
+  menuText: { fontSize: 16, color: "#1B5E20" },
 });
