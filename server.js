@@ -10,11 +10,20 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// Função para converter DD/MM/YYYY em Date
+const parseDate = (dateStr) => {
+  if (!dateStr) return null;
+  const parts = dateStr.split("/").map(Number);
+  const day = parts[0];
+  const month = parts[1];
+  const year = parts[2];
+  return new Date(year, month - 1, day); // JS usa meses de 0 a 11
+};
+
 // =======================
 // Usuários
 // =======================
 
-// Criar novo usuário
 app.post("/usuarios", async (req, res) => {
   try {
     const { nome, cpf, email, telefone, senha } = req.body;
@@ -38,7 +47,6 @@ app.post("/usuarios", async (req, res) => {
   }
 });
 
-// Login
 app.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
@@ -62,7 +70,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Buscar usuário por ID
 app.get("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,7 +87,6 @@ app.get("/usuarios/:id", async (req, res) => {
   }
 });
 
-// Atualizar dados do usuário (agora aceita telefone e CPF)
 app.put("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -89,7 +95,6 @@ app.put("/usuarios/:id", async (req, res) => {
     const usuarioExistente = await prisma.usuario.findUnique({ where: { id: Number(id) } });
     if (!usuarioExistente) return res.status(404).json({ error: "Usuário não encontrado." });
 
-    // Verifica se o novo CPF ou email já existe para outro usuário
     if (cpf && cpf !== usuarioExistente.cpf) {
       const cpfExistente = await prisma.usuario.findFirst({ where: { cpf } });
       if (cpfExistente) return res.status(400).json({ error: "CPF já cadastrado." });
@@ -118,7 +123,6 @@ app.put("/usuarios/:id", async (req, res) => {
   }
 });
 
-// Deletar usuário
 app.delete("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -138,6 +142,7 @@ app.delete("/usuarios/:id", async (req, res) => {
 // =======================
 // Pets
 // =======================
+
 app.post("/pets", async (req, res) => {
   try {
     const { nome, tipo, sexo, peso, usuarioId } = req.body;
@@ -177,6 +182,7 @@ app.get("/pets/:usuarioId", async (req, res) => {
 // =======================
 // Vacinas
 // =======================
+
 app.post("/vacinas", async (req, res) => {
   try {
     const { pet_id, nome_vacina, data_aplicacao, data_reforco, veterinario } = req.body;
@@ -185,8 +191,8 @@ app.post("/vacinas", async (req, res) => {
       data: {
         pet_id: Number(pet_id),
         nome_vacina,
-        data_aplicacao: data_aplicacao ? new Date(data_aplicacao) : null,
-        data_reforco: data_reforco ? new Date(data_reforco) : null,
+        data_aplicacao: parseDate(data_aplicacao),
+        data_reforco: parseDate(data_reforco),
         veterinario: veterinario || null,
       },
     });
@@ -215,14 +221,9 @@ app.get("/vacinas/:usuarioId", async (req, res) => {
 });
 
 // =======================
-// Inicialização do servidor
+// Atualizar e deletar pets
 // =======================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
 
-// Atualizar pet
 app.put("/pets/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -253,7 +254,6 @@ app.put("/pets/:id", async (req, res) => {
   }
 });
 
-// Deletar pet
 app.delete("/pets/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -275,4 +275,13 @@ app.delete("/pets/:id", async (req, res) => {
     console.error("❌ Erro ao deletar pet:", error);
     res.status(500).json({ error: "Erro ao deletar pet." });
   }
+});
+
+// =======================
+// Inicialização do servidor
+// =======================
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
