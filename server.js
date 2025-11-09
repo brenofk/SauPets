@@ -221,3 +221,58 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
+// Atualizar pet
+app.put("/pets/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome, tipo, sexo, peso } = req.body;
+
+    const petExistente = await prisma.pet.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!petExistente) {
+      return res.status(404).json({ error: "Pet não encontrado." });
+    }
+
+    const petAtualizado = await prisma.pet.update({
+      where: { id: Number(id) },
+      data: {
+        nome: nome ?? petExistente.nome,
+        tipo: tipo ?? petExistente.tipo,
+        sexo: sexo ?? petExistente.sexo,
+        peso: peso !== undefined ? Number(peso) : petExistente.peso,
+      },
+    });
+
+    res.json(petAtualizado);
+  } catch (error) {
+    console.error("❌ Erro ao atualizar pet:", error);
+    res.status(500).json({ error: "Erro ao atualizar pet." });
+  }
+});
+
+// Deletar pet
+app.delete("/pets/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const petExistente = await prisma.pet.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!petExistente) {
+      return res.status(404).json({ error: "Pet não encontrado." });
+    }
+
+    await prisma.pet.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ message: "Pet excluído com sucesso." });
+  } catch (error) {
+    console.error("❌ Erro ao deletar pet:", error);
+    res.status(500).json({ error: "Erro ao deletar pet." });
+  }
+});

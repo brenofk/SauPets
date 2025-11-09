@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
+  TextInput,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AuthContext } from "../../contexts/AuthContext"; // Contexto
+import { Picker } from "@react-native-picker/picker";
+import { AuthContext } from "../../contexts/AuthContext";
 
 type Pet = {
   id: string;
@@ -46,7 +48,17 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // 🔹 Busca dados do dashboard
+  // Modal de Pet
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  // Modal de edição
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedNome, setEditedNome] = useState("");
+  const [editedTipo, setEditedTipo] = useState("Cachorro");
+  const [editedSexo, setEditedSexo] = useState("Macho");
+  const [editedPeso, setEditedPeso] = useState("");
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -93,7 +105,6 @@ export default function Dashboard({ navigation }: Props) {
     fetchDashboardData();
   }, [user]);
 
-  // 🚪 Logout compatível Web/Mobile
   const handleLogout = async () => {
     setMenuVisible(false);
 
@@ -122,6 +133,57 @@ export default function Dashboard({ navigation }: Props) {
     });
   };
 
+  // Abrir modal de edição
+  const openEditModal = () => {
+    if (!selectedPet) return;
+    setEditedNome(selectedPet.nome);
+    setEditedTipo(selectedPet.tipo || "Cachorro");
+    setEditedSexo(selectedPet.sexo || "Macho");
+    setEditedPeso(selectedPet.peso?.toString() || "");
+    setEditModalVisible(true);
+  };
+
+  // Salvar alterações
+  const savePetChanges = async () => {
+    if (!selectedPet) return;
+
+    try {
+      const response = await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: editedNome,
+          tipo: editedTipo,
+          sexo: editedSexo,
+          peso: editedPeso ? Number(editedPeso) : null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao atualizar pet");
+      }
+
+      const updatedPet = await response.json();
+
+      // Atualiza state local
+      setRecentPets((prev) =>
+        prev.map((p) => (p.id === selectedPet.id ? updatedPet : p))
+      );
+      setSelectedPet(updatedPet);
+      setEditModalVisible(false);
+
+      // ✅ Alerta de sucesso
+      if (typeof window !== "undefined") {
+        window.alert("Pet atualizado com sucesso!");
+      } else {
+        Alert.alert("Sucesso", "Pet atualizado com sucesso!");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Não foi possível atualizar o pet.");
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -130,11 +192,9 @@ export default function Dashboard({ navigation }: Props) {
           <View style={styles.profileButton}>
             <Ionicons name="person-circle-outline" size={50} color="#4CAF50" />
           </View>
-
           <Text style={styles.headerText}>
             Olá, {user?.name || user?.email || "Usuário"}
           </Text>
-
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => setMenuVisible(true)}
@@ -200,9 +260,10 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() =>
-                  navigation.navigate("InfoPet", { petId: item.id.toString() })
-                }
+                onPress={() => {
+                  setSelectedPet(item);
+                  setModalVisible(true);
+                }}
               >
                 <Text style={styles.petName}>{item.nome}</Text>
                 <Text style={styles.petInfo}>{item.tipo}</Text>
@@ -211,6 +272,140 @@ export default function Dashboard({ navigation }: Props) {
           />
         )}
       </ScrollView>
+
+      {/* Modal de detalhes do Pet */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.petModal}>
+            <Text style={styles.modalTitle}>{selectedPet?.nome}</Text>
+            <Text>Tipo: {selectedPet?.tipo}</Text>
+            <Text>Sexo: {selectedPet?.sexo || "Não informado"}</Text>
+            <Text>Peso: {selectedPet?.peso ?? "Não informado"}</Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
+                onPress={openEditModal}
+              >
+                <Text style={styles.modalButtonText}>Editar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#E53935" }]}
+                onPress={async () => {
+                  if (!selectedPet) return;
+                  Alert.alert(
+                    "Excluir Pet",
+                    "Deseja realmente excluir este pet?",
+                    [
+                      { text: "Cancelar", style: "cancel" },
+                      {
+                        text: "Excluir",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
+                              method: "DELETE",
+                            });
+                            Alert.alert("Sucesso", "Pet excluído!");
+                            setRecentPets((prev) =>
+                              prev.filter((p) => p.id !== selectedPet.id)
+                            );
+                            setModalVisible(false);
+                          } catch (error) {
+                            Alert.alert("Erro", "Não foi possível excluir o pet.");
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.modalButtonText}>Excluir</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#AAA" }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Voltar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de edição do Pet */}
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.petModal}>
+            <Text style={styles.modalTitle}>Editar Pet</Text>
+
+            <Text>Nome</Text>
+            <TextInput
+              style={styles.input}
+              value={editedNome}
+              onChangeText={setEditedNome}
+            />
+
+            <Text>Peso</Text>
+            <TextInput
+              style={styles.input}
+              value={editedPeso}
+              onChangeText={setEditedPeso}
+              keyboardType="numeric"
+            />
+
+            <Text>Tipo</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={editedTipo}
+                onValueChange={(itemValue) => setEditedTipo(itemValue)}
+              >
+                <Picker.Item label="Cachorro" value="Cachorro" />
+                <Picker.Item label="Gato" value="Gato" />
+              </Picker>
+            </View>
+
+            <Text>Sexo</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={editedSexo}
+                onValueChange={(itemValue) => setEditedSexo(itemValue)}
+              >
+                <Picker.Item label="Macho" value="Macho" />
+                <Picker.Item label="Fêmea" value="Fêmea" />
+              </Picker>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
+                onPress={savePetChanges}
+              >
+                <Text style={styles.modalButtonText}>Salvar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#AAA" }]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Menu lateral */}
       <Modal visible={menuVisible} transparent animationType="slide">
@@ -242,7 +437,7 @@ export default function Dashboard({ navigation }: Props) {
   );
 }
 
-// 🎨 Estilos
+// Estilos
 const styles = StyleSheet.create({
   container: { backgroundColor: "#DDF3E0", padding: 20, paddingBottom: 40, flexGrow: 1 },
   headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 25 },
@@ -262,9 +457,16 @@ const styles = StyleSheet.create({
   petItem: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 10, elevation: 2 },
   petName: { fontSize: 18, fontWeight: "bold", color: "#333" },
   petInfo: { fontSize: 14, color: "#666", marginTop: 2 },
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)" },
-  sideMenu: { position: "absolute", top: 0, right: 0, width: "60%", height: "100%", backgroundColor: "#E8F5E9", padding: 20, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, elevation: 10 },
-  menuTitle: { fontSize: 20, fontWeight: "bold", color: "#1B5E20", marginBottom: 20 },
-  menuItem: { flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 10 },
-  menuText: { fontSize: 16, color: "#1B5E20" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "center", alignItems: "center" },
+  petModal: { backgroundColor: "#fff", padding: 20, borderRadius: 15, width: "80%" },
+  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
+  modalButton: { flex: 1, padding: 10, borderRadius: 8, alignItems: "center", marginHorizontal: 5 },
+  modalButtonText: { color: "#fff", fontWeight: "bold" },
+  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8, marginBottom: 10 },
+  pickerContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, marginBottom: 10 },
+  sideMenu: { position: "absolute", top: 0, right: 0, width: "60%", height: "100%", backgroundColor: "#E8F5E9", padding: 20, borderTopLeftRadius: 12, borderBottomLeftRadius: 12 },
+  menuTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 20, color: "#1B5E20" },
+  menuItem: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+  menuText: { fontSize: 16, marginLeft: 10 },
 });
