@@ -1,3 +1,4 @@
+// AppRoutes.tsx
 import React, { useContext } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -38,7 +39,7 @@ export default function AppRoutes() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Todas as telas estão registradas */}
+      {/* Todas as telas */}
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Cadastro" component={Cadastro} />
       <Stack.Screen name="Dashboard" component={Dashboard} />

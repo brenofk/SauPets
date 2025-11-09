@@ -55,11 +55,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         foto_perfil: data.foto_perfil || null,
       };
 
-      const token = data.token;
-
       setUser(userData);
       await AsyncStorage.setItem("@MyApp:user", JSON.stringify(userData));
-      await AsyncStorage.setItem("@MyApp:token", token);
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       throw error;
@@ -69,7 +66,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 🔹 Função de logout
   const signOut = async () => {
     setUser(null);
-    await AsyncStorage.multiRemove(["@MyApp:user", "@MyApp:token"]);
+    await AsyncStorage.removeItem("@MyApp:user");
   };
 
   // 🔹 Função para atualizar dados do usuário
@@ -80,39 +77,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await AsyncStorage.setItem("@MyApp:user", JSON.stringify(updatedUser));
   };
 
-  // 🔹 Carrega o usuário do AsyncStorage e valida com backend
+  // 🔹 Carrega o usuário do AsyncStorage
   useEffect(() => {
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("@MyApp:user");
-        const token = await AsyncStorage.getItem("@MyApp:token");
-
-        if (storedUser && token) {
-          const parsedUser: User = JSON.parse(storedUser);
-
-          // Busca dados atualizados do backend
-          const response = await fetch(`http://192.168.1.4:3000/usuarios/${parsedUser.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (!response.ok) {
-            // Usuário inválido ou token expirado
-            await signOut();
-          } else {
-            const data = await response.json();
-            const updatedUser: User = {
-              id: String(data.id),
-              name: data.nome,
-              email: data.email || "",
-              foto_perfil: data.foto_perfil || null,
-            };
-            setUser(updatedUser);
-            await AsyncStorage.setItem("@MyApp:user", JSON.stringify(updatedUser));
-          }
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
       } catch (error) {
-        console.error("Erro ao validar usuário:", error);
-        await signOut();
+        console.error("Erro ao carregar usuário:", error);
       } finally {
         setLoading(false);
       }

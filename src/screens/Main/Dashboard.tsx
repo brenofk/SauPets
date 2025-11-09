@@ -36,7 +36,7 @@ type Props = {
 };
 
 export default function Dashboard({ navigation }: Props) {
-  const { user, signOut } = useContext(AuthContext);
+  const { user, signOut, updateUser } = useContext(AuthContext);
   const [stats, setStats] = useState<Stats>({
     totalPets: 0,
     totalVaccines: 0,
@@ -47,11 +47,14 @@ export default function Dashboard({ navigation }: Props) {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState<{ uri?: string }>(
-    user?.foto_perfil
-      ? { uri: user.foto_perfil }
-      : require("../../assets/perfil.jpg")
-  );
+  const [profileImage, setProfileImage] = useState<{ uri?: string }>({});
+
+  // 🔹 Sincroniza a foto de perfil com o user do contexto
+  useEffect(() => {
+    if (user?.foto_perfil) {
+      setProfileImage({ uri: user.foto_perfil });
+    }
+  }, [user]);
 
   // 🔹 Busca dados do dashboard
   useEffect(() => {
@@ -74,9 +77,11 @@ export default function Dashboard({ navigation }: Props) {
         let overdue = 0;
 
         vacinasData.forEach((v: any) => {
-          const nextDose = new Date(v.proxima_dose);
-          if (nextDose < today) overdue++;
-          else if (nextDose < in30Days) upcoming++;
+          if (v.data_reforco) {
+            const nextDose = new Date(v.data_reforco);
+            if (nextDose < today) overdue++;
+            else if (nextDose < in30Days) upcoming++;
+          }
         });
 
         setStats({
@@ -129,8 +134,9 @@ export default function Dashboard({ navigation }: Props) {
         type: "image/jpeg",
       } as any);
 
+      // ⚠️ Corrigido o endpoint
       const response = await fetch(
-        `http://192.168.1.4:3000/upload-profile/${user?.id}`,
+        `http://192.168.1.4:3000/usuarios/${user?.id}/upload-profile`,
         {
           method: "POST",
           body: formData,
@@ -149,6 +155,7 @@ export default function Dashboard({ navigation }: Props) {
 
       if (response.ok && data.fotoUrl) {
         setProfileImage({ uri: data.fotoUrl });
+        updateUser({ ...user, foto_perfil: data.fotoUrl });
         Alert.alert("Sucesso", "Foto de perfil atualizada!");
       } else {
         Alert.alert("Erro", data.error || "Falha ao enviar a imagem.");
@@ -164,11 +171,9 @@ export default function Dashboard({ navigation }: Props) {
     setMenuVisible(false);
 
     if (typeof window !== "undefined") {
-      // Web
       const confirmLogout = window.confirm("Deseja realmente sair da sua conta?");
       if (!confirmLogout) return;
     } else {
-      // Mobile
       let confirmed = false;
       await new Promise<void>((resolve) => {
         Alert.alert(
@@ -197,7 +202,11 @@ export default function Dashboard({ navigation }: Props) {
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={pickImage} style={styles.profileButton}>
             <Image
-              source={profileImage.uri ? { uri: profileImage.uri } : profileImage}
+              source={
+                profileImage.uri && profileImage.uri.startsWith("http")
+                  ? { uri: profileImage.uri }
+                  : require("../../assets/perfil.jpg")
+              }
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -271,7 +280,9 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() => navigation.navigate("InfoPet", { petId: item.id.toString() })}
+                onPress={() =>
+                  navigation.navigate("InfoPet", { petId: item.id.toString() })
+                }
               >
                 <Text style={styles.petName}>{item.nome}</Text>
                 <Text style={styles.petInfo}>{item.tipo}</Text>
