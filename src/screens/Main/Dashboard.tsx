@@ -231,28 +231,45 @@ export default function Dashboard({ navigation }: Props) {
   };
 
   const saveVacinaChanges = async () => {
-    if (!selectedVacina) return;
+  if (!selectedVacina) return;
 
-    try {
-      const res = await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome_vacina: editedNomeVacina,
-          data_aplicacao: editedDataAplicacao,
-          data_reforco: editedDataReforco,
-          veterinario: editedVeterinario,
-        }),
-      });
-      const updated = await res.json();
-      setVacinas(prev => prev.map(v => v.id === updated.id ? updated : v));
-      setVacinaModalVisible(false);
+  try {
+    const res = await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome_vacina: editedNomeVacina,
+        data_aplicacao: editedDataAplicacao,
+        data_reforco: editedDataReforco,
+        veterinario: editedVeterinario,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Erro ao atualizar vacina");
+
+    const updated = await res.json();
+
+    setVacinas((prev) =>
+      prev.map((v) => (v.id === updated.id ? updated : v))
+    );
+    setVacinaModalVisible(false);
+
+    // Exibe mensagem compatível com Web
+    if (typeof window !== "undefined") {
+      alert("✅ Vacina atualizada com sucesso!");
+    } else {
       Alert.alert("Sucesso", "Vacina atualizada com sucesso!");
-    } catch (err) {
-      console.error(err);
+    }
+  } catch (err) {
+    console.error(err);
+    if (typeof window !== "undefined") {
+      alert("❌ Erro: não foi possível atualizar a vacina.");
+    } else {
       Alert.alert("Erro", "Não foi possível atualizar a vacina.");
     }
-  };
+  }
+};
+
 
   const deleteVacina = async () => {
     if (!selectedVacina) return;
