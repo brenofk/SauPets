@@ -271,26 +271,37 @@ export default function Dashboard({ navigation }: Props) {
 };
 
 
-  const deleteVacina = async () => {
-    if (!selectedVacina) return;
-    const confirm = await new Promise<boolean>((resolve) => {
-      Alert.alert("Excluir Vacina", "Deseja realmente excluir esta vacina?", [
-        { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-        { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
-      ]);
-    });
-    if (!confirm) return;
+  // ====================
+// Função de Excluir Vacina
+// ====================
+const deleteVacina = async () => {
+  try {
+    console.log("🧪 Tentando excluir vacina:", selectedVacina);
 
-    try {
-      await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, { method: "DELETE" });
-      setVacinas(prev => prev.filter(v => v.id !== selectedVacina.id));
-      setVacinaModalVisible(false);
-      Alert.alert("Sucesso", "Vacina excluída com sucesso!");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Erro", "Não foi possível excluir a vacina.");
+    if (!selectedVacina || !selectedVacina.id) {
+      window.alert("Erro: ID da vacina inválido. Não foi possível excluir.");
+      return;
     }
-  };
+
+    const response = await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      window.alert("✅ Vacina excluída com sucesso!");
+      setVacinas((prevVacinas) => prevVacinas.filter((v) => v.id !== selectedVacina.id));
+      setSelectedVacina(null);
+      setModalVisible(false);
+    } else {
+      window.alert("❌ Falha ao excluir a vacina. Tente novamente.");
+    }
+  } catch (error) {
+    console.error("❌ Erro ao excluir vacina:", error);
+    window.alert("Erro: Ocorreu um erro ao tentar excluir a vacina.");
+  }
+};
+
+
 
   // =========================
   // JSX
