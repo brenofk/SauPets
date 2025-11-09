@@ -6,24 +6,23 @@ import { PrismaClient } from "@prisma/client";
 const app = express();
 const prisma = new PrismaClient();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Função para converter DD/MM/YYYY em Date
-const parseDate = (dateStr) => {
+// =======================
+// Função auxiliar para datas
+// =======================
+function parseDate(dateStr) {
   if (!dateStr) return null;
-  const parts = dateStr.split("/").map(Number);
-  const day = parts[0];
-  const month = parts[1];
-  const year = parts[2];
-  return new Date(year, month - 1, day); // JS usa meses de 0 a 11
-};
+  const d = new Date(dateStr);
+  return isNaN(d) ? null : d;
+}
 
 // =======================
 // Usuários
 // =======================
 
+// Criar novo usuário
 app.post("/usuarios", async (req, res) => {
   try {
     const { nome, cpf, email, telefone, senha } = req.body;
@@ -47,22 +46,22 @@ app.post("/usuarios", async (req, res) => {
   }
 });
 
+// Login
 app.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
-
     const usuario = await prisma.usuario.findFirst({ where: { email, senha } });
 
     if (!usuario) {
       return res.status(401).json({ error: "Email ou senha incorretos." });
     }
 
-    res.json({ 
-      id: usuario.id, 
-      nome: usuario.nome, 
-      email: usuario.email, 
-      telefone: usuario.telefone, 
-      cpf: usuario.cpf 
+    res.json({
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      telefone: usuario.telefone,
+      cpf: usuario.cpf,
     });
   } catch (error) {
     console.error("❌ Erro ao fazer login:", error);
@@ -70,16 +69,13 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// Buscar usuário por ID
 app.get("/usuarios/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-
     const usuario = await prisma.usuario.findUnique({
-      where: { id: Number(id) },
+      where: { id: Number(req.params.id) },
     });
-
     if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
-
     res.json(usuario);
   } catch (error) {
     console.error("❌ Erro ao buscar usuário:", error);
@@ -87,6 +83,7 @@ app.get("/usuarios/:id", async (req, res) => {
   }
 });
 
+// Atualizar dados do usuário
 app.put("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,16 +91,6 @@ app.put("/usuarios/:id", async (req, res) => {
 
     const usuarioExistente = await prisma.usuario.findUnique({ where: { id: Number(id) } });
     if (!usuarioExistente) return res.status(404).json({ error: "Usuário não encontrado." });
-
-    if (cpf && cpf !== usuarioExistente.cpf) {
-      const cpfExistente = await prisma.usuario.findFirst({ where: { cpf } });
-      if (cpfExistente) return res.status(400).json({ error: "CPF já cadastrado." });
-    }
-
-    if (email && email !== usuarioExistente.email) {
-      const emailExistente = await prisma.usuario.findFirst({ where: { email } });
-      if (emailExistente) return res.status(400).json({ error: "Email já cadastrado." });
-    }
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id: Number(id) },
@@ -123,16 +110,15 @@ app.put("/usuarios/:id", async (req, res) => {
   }
 });
 
+// Deletar usuário
 app.delete("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
-
     const usuarioExistente = await prisma.usuario.findUnique({ where: { id: Number(id) } });
     if (!usuarioExistente) return res.status(404).json({ error: "Usuário não encontrado" });
 
     await prisma.usuario.delete({ where: { id: Number(id) } });
-
-    res.json({ message: "Usuário e todos os dados relacionados deletados com sucesso" });
+    res.json({ message: "Usuário deletado com sucesso" });
   } catch (error) {
     console.error("❌ Erro ao deletar usuário:", error);
     res.status(500).json({ error: "Erro ao deletar usuário" });
@@ -142,7 +128,6 @@ app.delete("/usuarios/:id", async (req, res) => {
 // =======================
 // Pets
 // =======================
-
 app.post("/pets", async (req, res) => {
   try {
     const { nome, tipo, sexo, peso, usuarioId } = req.body;
@@ -166,12 +151,9 @@ app.post("/pets", async (req, res) => {
 
 app.get("/pets/:usuarioId", async (req, res) => {
   try {
-    const { usuarioId } = req.params;
-
     const pets = await prisma.pet.findMany({
-      where: { usuario_id: Number(usuarioId) },
+      where: { usuario_id: Number(req.params.usuarioId) },
     });
-
     res.json(pets);
   } catch (error) {
     console.error("❌ Erro ao buscar pets:", error);
@@ -179,10 +161,45 @@ app.get("/pets/:usuarioId", async (req, res) => {
   }
 });
 
+// Atualizar pet
+app.put("/pets/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome, tipo, sexo, peso } = req.body;
+
+    const petAtualizado = await prisma.pet.update({
+      where: { id: Number(id) },
+      data: {
+        nome,
+        tipo,
+        sexo,
+        peso: peso !== undefined ? Number(peso) : null,
+      },
+    });
+
+    res.json(petAtualizado);
+  } catch (error) {
+    console.error("❌ Erro ao atualizar pet:", error);
+    res.status(500).json({ error: "Erro ao atualizar pet" });
+  }
+});
+
+// Deletar pet
+app.delete("/pets/:id", async (req, res) => {
+  try {
+    await prisma.pet.delete({ where: { id: Number(req.params.id) } });
+    res.json({ message: "Pet excluído com sucesso." });
+  } catch (error) {
+    console.error("❌ Erro ao deletar pet:", error);
+    res.status(500).json({ error: "Erro ao deletar pet." });
+  }
+});
+
 // =======================
-// Vacinas
+// Vacinas (CRUD completo)
 // =======================
 
+// Criar vacina
 app.post("/vacinas", async (req, res) => {
   try {
     const { pet_id, nome_vacina, data_aplicacao, data_reforco, veterinario } = req.body;
@@ -204,15 +221,13 @@ app.post("/vacinas", async (req, res) => {
   }
 });
 
+// Listar vacinas de um usuário
 app.get("/vacinas/:usuarioId", async (req, res) => {
   try {
-    const { usuarioId } = req.params;
-
     const vacinas = await prisma.vacina.findMany({
-      where: { pet: { usuario_id: Number(usuarioId) } },
+      where: { pet: { usuario_id: Number(req.params.usuarioId) } },
       include: { pet: { select: { nome: true } } },
     });
-
     res.json(vacinas);
   } catch (error) {
     console.error("❌ Erro ao buscar vacinas:", error);
@@ -220,68 +235,41 @@ app.get("/vacinas/:usuarioId", async (req, res) => {
   }
 });
 
-// =======================
-// Atualizar e deletar pets
-// =======================
-
-app.put("/pets/:id", async (req, res) => {
+// Atualizar vacina
+app.put("/vacinas/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nome, tipo, sexo, peso } = req.body;
+    const { nome_vacina, data_aplicacao, data_reforco, veterinario } = req.body;
 
-    const petExistente = await prisma.pet.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!petExistente) {
-      return res.status(404).json({ error: "Pet não encontrado." });
-    }
-
-    const petAtualizado = await prisma.pet.update({
-      where: { id: Number(id) },
+    const vacinaAtualizada = await prisma.vacina.update({
+      where: { id: Number(req.params.id) },
       data: {
-        nome: nome ?? petExistente.nome,
-        tipo: tipo ?? petExistente.tipo,
-        sexo: sexo ?? petExistente.sexo,
-        peso: peso !== undefined ? Number(peso) : petExistente.peso,
+        nome_vacina,
+        data_aplicacao: parseDate(data_aplicacao),
+        data_reforco: parseDate(data_reforco),
+        veterinario: veterinario || null,
       },
     });
 
-    res.json(petAtualizado);
+    res.json(vacinaAtualizada);
   } catch (error) {
-    console.error("❌ Erro ao atualizar pet:", error);
-    res.status(500).json({ error: "Erro ao atualizar pet." });
+    console.error("❌ Erro ao atualizar vacina:", error);
+    res.status(500).json({ error: "Erro ao atualizar vacina" });
   }
 });
 
-app.delete("/pets/:id", async (req, res) => {
+// Deletar vacina
+app.delete("/vacinas/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const petExistente = await prisma.pet.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!petExistente) {
-      return res.status(404).json({ error: "Pet não encontrado." });
-    }
-
-    await prisma.pet.delete({
-      where: { id: Number(id) },
-    });
-
-    res.json({ message: "Pet excluído com sucesso." });
+    await prisma.vacina.delete({ where: { id: Number(req.params.id) } });
+    res.json({ message: "Vacina excluída com sucesso." });
   } catch (error) {
-    console.error("❌ Erro ao deletar pet:", error);
-    res.status(500).json({ error: "Erro ao deletar pet." });
+    console.error("❌ Erro ao deletar vacina:", error);
+    res.status(500).json({ error: "Erro ao deletar vacina." });
   }
 });
 
 // =======================
 // Inicialização do servidor
 // =======================
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));

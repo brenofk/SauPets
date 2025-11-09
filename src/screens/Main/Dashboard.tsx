@@ -24,6 +24,16 @@ type Pet = {
   created_at: string;
 };
 
+type Vacina = {
+  id: number;
+  pet_id: number;
+  nome_vacina: string;
+  data_aplicacao: string | null;
+  data_reforco: string | null;
+  veterinario?: string | null;
+  pet?: { nome: string };
+};
+
 type Stats = {
   totalPets: number;
   totalVaccines: number;
@@ -37,6 +47,10 @@ type Props = {
 
 export default function Dashboard({ navigation }: Props) {
   const { user, signOut } = useContext(AuthContext);
+
+  // =========================
+  // States principais
+  // =========================
   const [stats, setStats] = useState<Stats>({
     totalPets: 0,
     totalVaccines: 0,
@@ -44,34 +58,56 @@ export default function Dashboard({ navigation }: Props) {
     overdueVaccines: 0,
   });
   const [recentPets, setRecentPets] = useState<Pet[]>([]);
+  const [vacinas, setVacinas] = useState<Vacina[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Modal de Pet
+  // =========================
+  // Modais de Pet
+  // =========================
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Modal de edição
+  // Modal de edição de Pet
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedNome, setEditedNome] = useState("");
   const [editedTipo, setEditedTipo] = useState("Cachorro");
   const [editedSexo, setEditedSexo] = useState("Macho");
   const [editedPeso, setEditedPeso] = useState("");
 
+  // =========================
+  // Modais de Vacina
+  // =========================
+  const [selectedVacina, setSelectedVacina] = useState<Vacina | null>(null);
+  const [vacinaModalVisible, setVacinaModalVisible] = useState(false);
+
+  const [editedNomeVacina, setEditedNomeVacina] = useState("");
+  const [editedDataAplicacao, setEditedDataAplicacao] = useState("");
+  const [editedDataReforco, setEditedDataReforco] = useState("");
+  const [editedVeterinario, setEditedVeterinario] = useState("");
+
+  // =========================
+  // Fetch Dashboard Data
+  // =========================
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         if (!user?.id) return;
 
+        // Pets
         const petsResponse = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
         const petsDataRaw = await petsResponse.json();
         const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
+        setRecentPets(petsData);
 
+        // Vacinas
         const vacinasResponse = await fetch(`http://192.168.1.4:3000/vacinas/${user.id}`);
         const vacinasDataRaw = await vacinasResponse.json();
         const vacinasData = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
+        setVacinas(vacinasData);
 
+        // Estatísticas
         const today = new Date();
         const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -92,8 +128,6 @@ export default function Dashboard({ navigation }: Props) {
           upcomingVaccines: upcoming,
           overdueVaccines: overdue,
         });
-
-        setRecentPets(petsData);
       } catch (error) {
         console.error("Erro ao carregar dados do dashboard:", error);
       } finally {
@@ -105,36 +139,31 @@ export default function Dashboard({ navigation }: Props) {
     fetchDashboardData();
   }, [user]);
 
+  // =========================
+  // Logout
+  // =========================
   const handleLogout = async () => {
     setMenuVisible(false);
-
-    if (typeof window !== "undefined") {
-      const confirmLogout = window.confirm("Deseja realmente sair da sua conta?");
-      if (!confirmLogout) return;
-    } else {
-      let confirmed = false;
-      await new Promise<void>((resolve) => {
-        Alert.alert(
-          "Sair",
-          "Deseja realmente sair da sua conta?",
-          [
-            { text: "Cancelar", style: "cancel", onPress: () => resolve() },
-            { text: "Sair", style: "destructive", onPress: () => { confirmed = true; resolve(); } },
-          ]
-        );
-      });
-      if (!confirmed) return;
-    }
+    const confirmed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        "Sair",
+        "Deseja realmente sair da sua conta?",
+        [
+          { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+          { text: "Sair", style: "destructive", onPress: () => resolve(true) },
+        ]
+      );
+    });
+    if (!confirmed) return;
 
     await signOut();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Login" }],
-    });
+    navigation.reset({ index: 0, routes: [{ name: "Login" }] });
   };
 
-  // Abrir modal de edição
-  const openEditModal = () => {
+  // =========================
+  // Pet - Edição
+  // =========================
+  const openEditPetModal = () => {
     if (!selectedPet) return;
     setEditedNome(selectedPet.nome);
     setEditedTipo(selectedPet.tipo || "Cachorro");
@@ -143,12 +172,11 @@ export default function Dashboard({ navigation }: Props) {
     setEditModalVisible(true);
   };
 
-  // Salvar alterações
   const savePetChanges = async () => {
     if (!selectedPet) return;
 
     try {
-      const response = await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
+      const res = await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -158,70 +186,98 @@ export default function Dashboard({ navigation }: Props) {
           peso: editedPeso ? Number(editedPeso) : null,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Erro ao atualizar pet");
-      }
-
-      const updatedPet = await response.json();
-
-      setRecentPets(prev =>
-        prev.map(p => (p.id === selectedPet.id ? updatedPet : p))
-      );
+      const updatedPet = await res.json();
+      setRecentPets(prev => prev.map(p => p.id === selectedPet.id ? updatedPet : p));
       setSelectedPet(updatedPet);
       setEditModalVisible(false);
-
-      if (typeof window !== "undefined") {
-        alert("Pet atualizado com sucesso!");
-      } else {
-        Alert.alert("Sucesso", "Pet atualizado com sucesso!");
-      }
-    } catch (error) {
-      console.error(error);
+      Alert.alert("Sucesso", "Pet atualizado com sucesso!");
+    } catch (err) {
+      console.error(err);
       Alert.alert("Erro", "Não foi possível atualizar o pet.");
     }
   };
 
-  // Excluir pet
   const deletePet = async () => {
     if (!selectedPet) return;
-
-    const confirmDelete = typeof window !== "undefined"
-      ? window.confirm("Deseja realmente excluir este pet?")
-      : await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            "Excluir Pet",
-            "Deseja realmente excluir este pet?",
-            [
-              { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-              { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
-            ]
-          );
-        });
-
-    if (!confirmDelete) return;
+    const confirm = await new Promise<boolean>((resolve) => {
+      Alert.alert("Excluir Pet", "Deseja realmente excluir este pet?", [
+        { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+        { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
+      ]);
+    });
+    if (!confirm) return;
 
     try {
-      const response = await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Erro ao deletar pet");
-
+      await fetch(`http://192.168.1.4:3000/pets/${selectedPet.id}`, { method: "DELETE" });
       setRecentPets(prev => prev.filter(p => p.id !== selectedPet.id));
       setModalVisible(false);
-
-      if (typeof window !== "undefined") {
-        alert("Pet excluído com sucesso!");
-      } else {
-        Alert.alert("Sucesso", "Pet excluído com sucesso!");
-      }
-    } catch (error) {
-      console.error(error);
+      Alert.alert("Sucesso", "Pet excluído com sucesso!");
+    } catch (err) {
+      console.error(err);
       Alert.alert("Erro", "Não foi possível excluir o pet.");
     }
   };
 
+  // =========================
+  // Vacina - Edição
+  // =========================
+  const openVacinaModal = (v: Vacina) => {
+    setSelectedVacina(v);
+    setEditedNomeVacina(v.nome_vacina);
+    setEditedDataAplicacao(v.data_aplicacao?.split("T")[0] || "");
+    setEditedDataReforco(v.data_reforco?.split("T")[0] || "");
+    setEditedVeterinario(v.veterinario || "");
+    setVacinaModalVisible(true);
+  };
+
+  const saveVacinaChanges = async () => {
+    if (!selectedVacina) return;
+
+    try {
+      const res = await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome_vacina: editedNomeVacina,
+          data_aplicacao: editedDataAplicacao,
+          data_reforco: editedDataReforco,
+          veterinario: editedVeterinario,
+        }),
+      });
+      const updated = await res.json();
+      setVacinas(prev => prev.map(v => v.id === updated.id ? updated : v));
+      setVacinaModalVisible(false);
+      Alert.alert("Sucesso", "Vacina atualizada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Erro", "Não foi possível atualizar a vacina.");
+    }
+  };
+
+  const deleteVacina = async () => {
+    if (!selectedVacina) return;
+    const confirm = await new Promise<boolean>((resolve) => {
+      Alert.alert("Excluir Vacina", "Deseja realmente excluir esta vacina?", [
+        { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+        { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
+      ]);
+    });
+    if (!confirm) return;
+
+    try {
+      await fetch(`http://192.168.1.4:3000/vacinas/${selectedVacina.id}`, { method: "DELETE" });
+      setVacinas(prev => prev.filter(v => v.id !== selectedVacina.id));
+      setVacinaModalVisible(false);
+      Alert.alert("Sucesso", "Vacina excluída com sucesso!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Erro", "Não foi possível excluir a vacina.");
+    }
+  };
+
+  // =========================
+  // JSX
+  // =========================
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -230,13 +286,8 @@ export default function Dashboard({ navigation }: Props) {
           <View style={styles.profileButton}>
             <Ionicons name="person-circle-outline" size={50} color="#4CAF50" />
           </View>
-          <Text style={styles.headerText}>
-            Olá, {user?.name || user?.email || "Usuário"}
-          </Text>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setMenuVisible(true)}
-          >
+          <Text style={styles.headerText}>Olá, {user?.name || user?.email || "Usuário"}</Text>
+          <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
             <Ionicons name="menu-outline" size={30} color="#1B5E20" />
           </TouchableOpacity>
         </View>
@@ -286,7 +337,6 @@ export default function Dashboard({ navigation }: Props) {
 
         {/* Lista de Pets */}
         <Text style={styles.sectionTitle}>Pets Recentes</Text>
-
         {loadingPets ? (
           <ActivityIndicator size="large" color="#4CAF50" />
         ) : recentPets.length === 0 ? (
@@ -309,41 +359,50 @@ export default function Dashboard({ navigation }: Props) {
             )}
           />
         )}
+
+        {/* Lista de Vacinas */}
+        <Text style={styles.sectionTitle}>Vacinas Recentes</Text>
+        {vacinas.length === 0 ? (
+          <Text style={styles.noPetsText}>Nenhuma vacina encontrada.</Text>
+        ) : (
+          <FlatList
+            data={vacinas}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.petItem}
+                onPress={() => openVacinaModal(item)}
+              >
+                <Text style={styles.petName}>{item.nome_vacina}</Text>
+                <Text>Pet: {item.pet?.nome}</Text>
+                <Text>
+                   Próxima dose:{" "}
+                  {item.data_reforco ? new Date(item.data_reforco).toLocaleDateString("pt-BR"): "—"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
       </ScrollView>
 
-      {/* Modal de detalhes do Pet */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      {/* =========================
+          Modal de Pet
+      ========================= */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.overlay}>
           <View style={styles.petModal}>
             <Text style={styles.modalTitle}>{selectedPet?.nome}</Text>
             <Text>Tipo: {selectedPet?.tipo}</Text>
             <Text>Sexo: {selectedPet?.sexo || "Não informado"}</Text>
             <Text>Peso: {selectedPet?.peso ?? "Não informado"}</Text>
-
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
-                onPress={openEditModal}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#4CAF50" }]} onPress={openEditPetModal}>
                 <Text style={styles.modalButtonText}>Editar</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#E53935" }]}
-                onPress={deletePet}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#E53935" }]} onPress={deletePet}>
                 <Text style={styles.modalButtonText}>Excluir</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#AAA" }]}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#AAA" }]} onPress={() => setModalVisible(false)}>
                 <Text style={styles.modalButtonText}>Voltar</Text>
               </TouchableOpacity>
             </View>
@@ -351,66 +410,34 @@ export default function Dashboard({ navigation }: Props) {
         </View>
       </Modal>
 
-      {/* Modal de edição do Pet */}
-      <Modal
-        visible={editModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditModalVisible(false)}
-      >
+      {/* Modal de edição de Pet */}
+      <Modal visible={editModalVisible} transparent animationType="slide" onRequestClose={() => setEditModalVisible(false)}>
         <View style={styles.overlay}>
           <View style={styles.petModal}>
             <Text style={styles.modalTitle}>Editar Pet</Text>
-
             <Text>Nome</Text>
-            <TextInput
-              style={styles.input}
-              value={editedNome}
-              onChangeText={setEditedNome}
-            />
-
+            <TextInput style={styles.input} value={editedNome} onChangeText={setEditedNome} />
             <Text>Peso</Text>
-            <TextInput
-              style={styles.input}
-              value={editedPeso}
-              onChangeText={setEditedPeso}
-              keyboardType="numeric"
-            />
-
+            <TextInput style={styles.input} value={editedPeso} onChangeText={setEditedPeso} keyboardType="numeric" />
             <Text>Tipo</Text>
             <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={editedTipo}
-                onValueChange={(itemValue) => setEditedTipo(itemValue)}
-              >
+              <Picker selectedValue={editedTipo} onValueChange={setEditedTipo}>
                 <Picker.Item label="Cachorro" value="Cachorro" />
                 <Picker.Item label="Gato" value="Gato" />
               </Picker>
             </View>
-
             <Text>Sexo</Text>
             <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={editedSexo}
-                onValueChange={(itemValue) => setEditedSexo(itemValue)}
-              >
+              <Picker selectedValue={editedSexo} onValueChange={setEditedSexo}>
                 <Picker.Item label="Macho" value="Macho" />
                 <Picker.Item label="Fêmea" value="Fêmea" />
               </Picker>
             </View>
-
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
-                onPress={savePetChanges}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#4CAF50" }]} onPress={savePetChanges}>
                 <Text style={styles.modalButtonText}>Salvar</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#AAA" }]}
-                onPress={() => setEditModalVisible(false)}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#AAA" }]} onPress={() => setEditModalVisible(false)}>
                 <Text style={styles.modalButtonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
@@ -418,66 +445,66 @@ export default function Dashboard({ navigation }: Props) {
         </View>
       </Modal>
 
-      {/* Menu lateral */}
-      <Modal visible={menuVisible} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.overlay}
-          onPress={() => setMenuVisible(false)}
-        />
-        <View style={styles.sideMenu}>
-          <Text style={styles.menuTitle}>Menu</Text>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => {
-              setMenuVisible(false);
-              navigation.navigate("TelaConfiguracao");
-            }}
-          >
-            <Ionicons name="settings-outline" size={22} color="#1B5E20" />
-            <Text style={styles.menuText}>Configurações</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={22} color="#E53935" />
-            <Text style={[styles.menuText, { color: "#E53935" }]}>Sair</Text>
-          </TouchableOpacity>
+      {/* =========================
+          Modal de Vacina
+      ========================= */}
+      <Modal visible={vacinaModalVisible} transparent animationType="slide" onRequestClose={() => setVacinaModalVisible(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.petModal}>
+            <Text style={styles.modalTitle}>Editar Vacina</Text>
+            <Text>Nome</Text>
+            <TextInput style={styles.input} value={editedNomeVacina} onChangeText={setEditedNomeVacina} />
+            <Text>Data Aplicação</Text>
+            <TextInput style={styles.input} value={editedDataAplicacao} onChangeText={setEditedDataAplicacao} placeholder="YYYY-MM-DD" />
+            <Text>Data Reforço</Text>
+            <TextInput style={styles.input} value={editedDataReforco} onChangeText={setEditedDataReforco} placeholder="YYYY-MM-DD" />
+            <Text>Veterinário</Text>
+            <TextInput style={styles.input} value={editedVeterinario} onChangeText={setEditedVeterinario} />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#4CAF50" }]} onPress={saveVacinaChanges}>
+                <Text style={styles.modalButtonText}>Salvar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#E53935" }]} onPress={deleteVacina}>
+                <Text style={styles.modalButtonText}>Excluir</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#AAA" }]} onPress={() => setVacinaModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Voltar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
   );
 }
 
-// Estilos (mantidos do seu original)
+// =========================
+// Styles
+// =========================
 const styles = StyleSheet.create({
-  container: { backgroundColor: "#DDF3E0", padding: 20, paddingBottom: 40, flexGrow: 1 },
-  headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 25 },
-  profileButton: { width: 55, height: 55, borderRadius: 30, alignItems: "center", justifyContent: "center" },
-  profileImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  headerText: { fontSize: 22, fontWeight: "bold", color: "#1B5E20", maxWidth: "60%" },
-  menuButton: { backgroundColor: "transparent", padding: 6, borderRadius: 50 },
-  statsContainer: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginBottom: 30 },
-  statCard: { width: "47%", backgroundColor: "#C7E7D4", padding: 16, borderRadius: 12, marginBottom: 15, alignItems: "center" },
-  statValue: { fontSize: 24, fontWeight: "bold", color: "#2E7D32" },
-  statLabel: { fontSize: 14, color: "#555", marginTop: 4, textAlign: "center" },
-  actions: { flexDirection: "row", justifyContent: "space-between", marginBottom: 30, gap: 10 },
-  actionButton: { flex: 1, paddingVertical: 14, borderRadius: 10, alignItems: "center" },
-  actionText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10, color: "#1B5E20", textAlign: "center" },
-  noPetsText: { fontSize: 14, color: "#555", textAlign: "center", marginTop: 10 },
-  petItem: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 10, elevation: 2 },
-  petName: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  petInfo: { fontSize: 14, color: "#666", marginTop: 2 },
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "center", alignItems: "center" },
-  petModal: { backgroundColor: "#fff", padding: 20, borderRadius: 15, width: "80%" },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
-  modalButton: { flex: 1, padding: 10, borderRadius: 8, alignItems: "center", marginHorizontal: 5 },
-  modalButtonText: { color: "#fff", fontWeight: "bold" },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8, marginBottom: 10 },
-  pickerContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, marginBottom: 10 },
-  sideMenu: { position: "absolute", top: 0, left: 0, bottom: 0, width: "70%", backgroundColor: "#fff", padding: 20 },
-  menuTitle: { fontSize: 22, fontWeight: "bold", marginBottom: 20, color: "#1B5E20" },
-  menuItem: { flexDirection: "row", alignItems: "center", marginBottom: 15, gap: 10 },
-  menuText: { fontSize: 16, color: "#1B5E20" },
+  container: { padding: 16, paddingBottom: 80 },
+  headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+  profileButton: {},
+  headerText: { fontSize: 22, fontWeight: "bold", color: "#1B5E20" },
+  menuButton: {},
+  statsContainer: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap" },
+  statCard: { backgroundColor: "#FFF", borderRadius: 8, padding: 16, width: "48%", marginBottom: 8, alignItems: "center" },
+  statValue: { fontSize: 20, fontWeight: "bold", color: "#1B5E20" },
+  statLabel: { fontSize: 14, color: "#4CAF50" },
+  actions: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
+  actionButton: { flex: 1, padding: 12, borderRadius: 8, marginHorizontal: 4, alignItems: "center" },
+  actionText: { color: "#FFF", fontWeight: "bold" },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", marginVertical: 8, color: "#1B5E20" },
+  petItem: { backgroundColor: "#FFF", padding: 12, borderRadius: 8, marginBottom: 8 },
+  petName: { fontSize: 16, fontWeight: "bold", color: "#1B5E20" },
+  petInfo: { fontSize: 14, color: "#555" },
+  noPetsText: { color: "#555", fontStyle: "italic", marginBottom: 8 },
+  overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
+  petModal: { backgroundColor: "#FFF", padding: 20, borderRadius: 12, width: "90%" },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, color: "#1B5E20" },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalButton: { padding: 10, borderRadius: 8, flex: 1, marginHorizontal: 4, alignItems: "center" },
+  modalButtonText: { color: "#FFF", fontWeight: "bold" },
+  input: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, padding: 8, marginVertical: 6 },
+  pickerContainer: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, marginVertical: 6 },
 });
