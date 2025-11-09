@@ -22,6 +22,8 @@ export default function TelaAlterarInfoUser() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cpf, setCpf] = useState("");
 
   // Carrega os dados do usuário
   useEffect(() => {
@@ -33,13 +35,15 @@ export default function TelaAlterarInfoUser() {
         setNome(data.nome || "");
         setEmail(data.email || "");
         setSenha(data.senha || "");
+        setTelefone(data.telefone || "");
+        setCpf(data.cpf || "");
       })
       .catch(() => Alert.alert("Erro", "Não foi possível carregar seus dados."));
   }, [user]);
 
   // Atualiza as informações do usuário
   const handleSalvar = async () => {
-    if (!nome || !email || !senha) {
+    if (!nome || !email || !senha || !telefone || !cpf) {
       Alert.alert("Atenção", "Preencha todos os campos.");
       return;
     }
@@ -52,6 +56,8 @@ export default function TelaAlterarInfoUser() {
           nome,
           email,
           senha,
+          telefone,
+          cpf,
         }),
       });
 
@@ -59,6 +65,8 @@ export default function TelaAlterarInfoUser() {
         await updateUser({
           name: nome,
           email,
+          telefone,
+          cpf,
         });
         Alert.alert("Sucesso", "Informações atualizadas!");
         navigation.navigate("TelaConfiguracao");
@@ -99,6 +107,24 @@ export default function TelaAlterarInfoUser() {
         onChangeText={setSenha}
         placeholderTextColor="#aaa"
         secureTextEntry
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Telefone"
+        value={telefone}
+        onChangeText={setTelefone}
+        placeholderTextColor="#aaa"
+        keyboardType="phone-pad"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="CPF"
+        value={cpf}
+        onChangeText={setCpf}
+        placeholderTextColor="#aaa"
+        keyboardType="number-pad"
       />
 
       <TouchableOpacity style={styles.botaoSalvar} onPress={handleSalvar}>

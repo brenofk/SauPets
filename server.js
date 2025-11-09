@@ -49,7 +49,13 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou senha incorretos." });
     }
 
-    res.json({ id: usuario.id, nome: usuario.nome, email: usuario.email });
+    res.json({ 
+      id: usuario.id, 
+      nome: usuario.nome, 
+      email: usuario.email, 
+      telefone: usuario.telefone, 
+      cpf: usuario.cpf 
+    });
   } catch (error) {
     console.error("❌ Erro ao fazer login:", error);
     res.status(500).json({ error: "Erro ao fazer login" });
@@ -74,15 +80,25 @@ app.get("/usuarios/:id", async (req, res) => {
   }
 });
 
-// Atualizar dados do usuário
+// Atualizar dados do usuário (agora aceita telefone e CPF)
 app.put("/usuarios/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, email, telefone, senha } = req.body;
+    const { nome, email, telefone, senha, cpf } = req.body;
 
     const usuarioExistente = await prisma.usuario.findUnique({ where: { id: Number(id) } });
-
     if (!usuarioExistente) return res.status(404).json({ error: "Usuário não encontrado." });
+
+    // Verifica se o novo CPF ou email já existe para outro usuário
+    if (cpf && cpf !== usuarioExistente.cpf) {
+      const cpfExistente = await prisma.usuario.findFirst({ where: { cpf } });
+      if (cpfExistente) return res.status(400).json({ error: "CPF já cadastrado." });
+    }
+
+    if (email && email !== usuarioExistente.email) {
+      const emailExistente = await prisma.usuario.findFirst({ where: { email } });
+      if (emailExistente) return res.status(400).json({ error: "Email já cadastrado." });
+    }
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id: Number(id) },
@@ -91,6 +107,7 @@ app.put("/usuarios/:id", async (req, res) => {
         email: email ?? usuarioExistente.email,
         telefone: telefone ?? usuarioExistente.telefone,
         senha: senha ?? usuarioExistente.senha,
+        cpf: cpf ?? usuarioExistente.cpf,
       },
     });
 

@@ -1,10 +1,13 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// 🔹 Adicionando telefone e cpf
 type User = {
   id: string;
   name: string;
   email: string;
+  telefone?: string;
+  cpf?: string;
 };
 
 type AuthContextType = {
@@ -51,6 +54,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: String(data.id),
         name: data.nome,
         email: data.email || "",
+        telefone: data.telefone || undefined,
+        cpf: data.cpf || undefined,
       };
 
       setUser(userData);
