@@ -79,7 +79,7 @@ export default function Login() {
 
       // sucesso → faz o login normalmente
       await signIn(email, senha);
-      navigation.navigate("Dashboard");
+      
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       setLoginError("Falha de conexão com o servidor.");

@@ -143,22 +143,13 @@ export default function Dashboard({ navigation }: Props) {
   // Logout
   // =========================
   const handleLogout = async () => {
-    setMenuVisible(false);
-    const confirmed = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        "Sair",
-        "Deseja realmente sair da sua conta?",
-        [
-          { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-          { text: "Sair", style: "destructive", onPress: () => resolve(true) },
-        ]
-      );
-    });
-    if (!confirmed) return;
-
     await signOut();
-    navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-  };
+  navigation.reset({
+    index: 0,
+    routes: [{ name: "Login" }],
+  });
+  
+};
 
   // =========================
   // Pet - Edição
@@ -502,7 +493,49 @@ const deleteVacina = async () => {
           </View>
         </View>
       </Modal>
+
+      {/* =========================
+    Menu Lateral
+========================= */}
+<Modal
+  visible={menuVisible}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setMenuVisible(false)}
+>
+  <View style={styles.overlay}>
+    <View style={styles.menuModal}>
+      <Text style={styles.menuTitle}>Menu</Text>
+
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => {
+          setMenuVisible(false);
+          navigation.navigate("TelaConfiguracao");
+        }}
+      >
+        <Ionicons name="settings-outline" size={22} color="#1B5E20" />
+        <Text style={styles.menuItemText}>Configurações</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+        <Ionicons name="exit-outline" size={22} color="#E53935" />
+        <Text style={[styles.menuItemText, { color: "#E53935" }]}>Sair</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.menuItem, { marginTop: 20 }]}
+        onPress={() => setMenuVisible(false)}
+      >
+        <Ionicons name="close-circle-outline" size={22} color="#555" />
+        <Text style={styles.menuItemText}>Fechar</Text>
+      </TouchableOpacity>
     </View>
+  </View>
+</Modal>
+
+    </View>
+    
   );
 }
 
@@ -535,4 +568,28 @@ const styles = StyleSheet.create({
   modalButtonText: { color: "#FFF", fontWeight: "bold" },
   input: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, padding: 8, marginVertical: 6 },
   pickerContainer: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, marginVertical: 6 },
+  
+  menuModal: {
+  backgroundColor: "#FFF",
+  padding: 20,
+  borderRadius: 12,
+  width: "80%",
+},
+menuTitle: {
+  fontSize: 20,
+  fontWeight: "bold",
+  marginBottom: 16,
+  color: "#1B5E20",
+},
+menuItem: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingVertical: 12,
+},
+menuItemText: {
+  fontSize: 16,
+  marginLeft: 10,
+  color: "#1B5E20",
+},
+
 });

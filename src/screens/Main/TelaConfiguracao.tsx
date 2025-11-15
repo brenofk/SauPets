@@ -56,16 +56,15 @@ export default function TelaConfiguracao() {
       });
 
       if (response.ok) {
-        await signOut();
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: "Login" }],
-          })
-        );
-        if (Platform.OS === "web") alert("Conta excluída com sucesso!");
-        else console.log("Conta excluída com sucesso!");
-      } else {
+  await signOut();
+
+  if (Platform.OS === "web") {
+    alert("Conta excluída com sucesso!");
+  }
+
+  return;
+}
+ else {
         const data = await response.json();
         if (Platform.OS === "web") alert(data.error || "Não foi possível excluir a conta.");
         else console.log(data.error || "Não foi possível excluir a conta.");
