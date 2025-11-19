@@ -15,6 +15,22 @@ import { useFonts } from "expo-font";
 import { AuthContext } from "../../contexts/AuthContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../routes/AppRoutes";
+import { API_URL } from '../../config/config';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -66,7 +82,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const response = await fetch("http://192.168.1.4:3000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),

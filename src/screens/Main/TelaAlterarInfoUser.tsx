@@ -12,6 +12,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../routes/AppRoutes";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { API_URL } from '../../config/config';
+
+
+
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 
@@ -29,7 +33,7 @@ export default function TelaAlterarInfoUser() {
   useEffect(() => {
     if (!user?.id) return;
 
-    fetch(`http://192.168.1.4:3000/usuarios/${user.id}`)
+    fetch(`${API_URL}/usuarios/${user.id}`)
       .then(res => res.json())
       .then(data => {
         setNome(data.nome || "");
@@ -49,7 +53,7 @@ export default function TelaAlterarInfoUser() {
     }
 
     try {
-      const response = await fetch(`http://192.168.1.4:3000/usuarios/${user?.id}`, {
+      fetch(`${API_URL}/usuarios/${user?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

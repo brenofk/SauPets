@@ -12,6 +12,8 @@ import { Picker } from "@react-native-picker/picker";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../types";
 import { AuthContext } from "../../contexts/AuthContext";
+import { API_URL } from '../../config/config';
+
 
 type VacinasScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -40,7 +42,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
       if (!user) return;
 
       try {
-        const response = await fetch(`http://192.168.1.4:3000/pets/${user.id}`);
+        const response = await fetch(`${API_URL}/pets/${user.id}`);
         const data = await response.json();
         setPets(data);
       } catch (error) {
@@ -81,7 +83,7 @@ export default function TelaCadastroVacinas({ navigation }: Props) {
 
       console.log("📦 Enviando vacina:", novaVacina);
 
-      const response = await fetch("http://192.168.1.4:3000/vacinas", {
+      const response = await fetch(`${API_URL}/vacinas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(novaVacina),

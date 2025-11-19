@@ -11,6 +11,20 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../../contexts/AuthContext"; // ajuste o caminho conforme o seu projeto
+import { API_URL } from '../../config/config';
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const TelaCadastroPet = () => {
   const navigation = useNavigation();
@@ -66,7 +80,7 @@ const TelaCadastroPet = () => {
     };
 
     try {
-      const response = await fetch("http://192.168.1.4:3000/pets", {
+      const response = await fetch(`${API_URL}/pets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(novoPet),
