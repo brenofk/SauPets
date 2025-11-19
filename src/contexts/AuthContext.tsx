@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from "../config/config"; // ajuste o caminho
+
 
 // 🔹 Adicionando telefone e cpf
 type User = {
@@ -37,7 +39,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 🔹 Função de login
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch("http://192.168.1.4:3000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha: password }),
