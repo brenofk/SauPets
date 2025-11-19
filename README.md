@@ -30,8 +30,7 @@ SauPet/
 ├─ server/             # Backend Node.js  
 │  ├─ server.js  
 │  ├─ routes/  
-│  ├─ controllers/  
-│  └─ models/  
+│  └─prisma
 │     └─ schema.prisma # Modelo do banco (Prisma)  
 ├─ package.json  
 └─ README.md  
