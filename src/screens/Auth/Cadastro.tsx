@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { API_URL } from '../../config/config';
+
+
+
 
 export default function Cadastro({ navigation }: any) {
   const [nome, setNome] = useState("");
@@ -41,8 +45,8 @@ export default function Cadastro({ navigation }: any) {
   }
 
   try {
-  // 👉 Troque o IP abaixo dependendo de como você testa:
-  const response = await fetch("http://192.168.1.4:3000/usuarios", {
+  
+  const response = await fetch(`${API_URL}/usuarios`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
