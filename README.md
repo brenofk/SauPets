@@ -111,44 +111,43 @@ cd SauPets
 npm install
 ```
 
-### 2.2
-Configurar banco de dados
+### 2️⃣.2️⃣ Configurar banco de dados
 Instale MySQL e crie o banco:
 ```
 CREATE DATABASE saupet;
 ```
 
-### 2.3
-Configure o usuário, senha e host no arquivo .env:
+### 2️⃣.3️⃣ Configure o usuário, senha e host no arquivo .env:
+
 ```
 DATABASE_URL="mysql://usuario:senha@localhost:3306/saupet"
 ```
-### 2.4
-Configure também API_URL no frontend (src/config/config.ts):
+### 2️⃣.4️⃣ Configure também API_URL no frontend (src/config/config.ts):
+
 ```
 export const API_URL = "http://SEU_IP_LOCAL:3000";
 ```
 
-### 2.5 
-Rodar migrações Prisma
+### 2️⃣.5️⃣ Rodar migrações Prisma
+
 ```
 npx prisma migrate dev --name init
 ```
 
-### 2.6
-Rodar backend
+### 2️⃣.6️⃣ Rodar backend
+
 ```
 node server.js
 ```
 ### 3️⃣ Configurar Frontend
-### 3.0
-Instalar dependências
+### 3️⃣.2️⃣ Instalar dependências
+
 ```
 npx expo install @expo/vector-icons
 ```
 
-#### 3.1 
-Rodar frontend
+### 3️⃣.3️⃣ Rodar frontend
+
 ```
 npm start
 ```
