@@ -47,41 +47,36 @@ export default function TelaAlterarInfoUser() {
 
   // Atualiza as informações do usuário
   const handleSalvar = async () => {
-    if (!nome || !email || !senha || !telefone || !cpf) {
-      Alert.alert("Atenção", "Preencha todos os campos.");
-      return;
-    }
+  if (!nome || !email || !senha || !telefone || !cpf) {
+    Alert.alert("Atenção", "Preencha todos os campos.");
+    return;
+  }
 
-    try {
-      fetch(`${API_URL}/usuarios/${user?.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome,
-          email,
-          senha,
-          telefone,
-          cpf,
-        }),
+  try {
+    const response = await fetch(`${API_URL}/usuarios/${user?.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, email, senha, telefone, cpf }),
+    });
+
+    if (response.ok) {
+      await updateUser({
+        name: nome,
+        email,
+        telefone,
+        cpf,
       });
-
-      if (response.ok) {
-        await updateUser({
-          name: nome,
-          email,
-          telefone,
-          cpf,
-        });
-        Alert.alert("Sucesso", "Informações atualizadas!");
-        navigation.navigate("TelaConfiguracao");
-      } else {
-        Alert.alert("Erro", "Não foi possível atualizar as informações.");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Erro", "Erro de conexão com o servidor.");
+      Alert.alert("Sucesso", "Informações atualizadas!");
+      navigation.navigate("TelaConfiguracao");
+    } else {
+      Alert.alert("Erro", "Não foi possível atualizar as informações.");
     }
-  };
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Erro", "Erro de conexão com o servidor.");
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

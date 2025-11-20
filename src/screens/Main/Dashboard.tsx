@@ -10,11 +10,13 @@ import {
   Modal,
   TextInput,
   Alert,
+  Animated,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { AuthContext } from "../../contexts/AuthContext";
-import { API_URL } from '../../config/config';
+import { API_URL } from "../../config/config";
 
 type Pet = {
   id: string;
@@ -59,7 +61,28 @@ export default function Dashboard({ navigation }: Props) {
   const [vacinas, setVacinas] = useState<Vacina[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPets, setLoadingPets] = useState(true);
+
   const [menuVisible, setMenuVisible] = useState(false);
+
+  // ANIMAÇÃO DO MENU LATERAL
+  const slideAnim = useState(new Animated.Value(-300))[0];
+
+  const openMenu = () => {
+    setMenuVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const closeMenu = () => {
+    Animated.timing(slideAnim, {
+      toValue: -300,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => setMenuVisible(false));
+  };
 
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -86,19 +109,16 @@ export default function Dashboard({ navigation }: Props) {
       try {
         if (!user?.id) return;
 
-        // Pets
         const petsResponse = await fetch(`${API_URL}/pets/${user.id}`);
         const petsDataRaw = await petsResponse.json();
         const petsData = Array.isArray(petsDataRaw) ? petsDataRaw : [];
         setRecentPets(petsData);
 
-        // Vacinas
         const vacinasResponse = await fetch(`${API_URL}/vacinas/${user.id}`);
         const vacinasDataRaw = await vacinasResponse.json();
         const vacinasData = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
         setVacinas(vacinasData);
 
-        // Estatísticas
         const today = new Date();
         const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -141,132 +161,10 @@ export default function Dashboard({ navigation }: Props) {
     });
   };
 
-  // =========================
-  // Pet - Edição
-  // =========================
-  const openEditPetModal = () => {
-    if (!selectedPet) return;
-    setEditedNome(selectedPet.nome);
-    setEditedTipo(selectedPet.tipo || "Cachorro");
-    setEditedSexo(selectedPet.sexo || "Macho");
-    setEditedPeso(selectedPet.peso?.toString() || "");
-    setEditModalVisible(true);
-  };
+  // ==============================================================
+  // ========================= RENDER JSX =========================
+  // ==============================================================
 
-  const savePetChanges = async () => {
-    if (!selectedPet) return;
-
-    try {
-      const res = await fetch(`${API_URL}/pets/${selectedPet.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: editedNome,
-          tipo: editedTipo,
-          sexo: editedSexo,
-          peso: editedPeso ? Number(editedPeso) : null,
-        }),
-      });
-      const updatedPet = await res.json();
-      setRecentPets(prev => prev.map(p => p.id === selectedPet.id ? updatedPet : p));
-      setSelectedPet(updatedPet);
-      setEditModalVisible(false);
-      Alert.alert("Sucesso", "Pet atualizado com sucesso!");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Erro", "Não foi possível atualizar o pet.");
-    }
-  };
-
-  const deletePet = async () => {
-    if (!selectedPet) return;
-    const confirm = await new Promise<boolean>((resolve) => {
-      Alert.alert("Excluir Pet", "Deseja realmente excluir este pet?", [
-        { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-        { text: "Excluir", style: "destructive", onPress: () => resolve(true) },
-      ]);
-    });
-    if (!confirm) return;
-
-    try {
-      await fetch(`${API_URL}/pets/${selectedPet.id}`, { method: "DELETE" });
-      setRecentPets(prev => prev.filter(p => p.id !== selectedPet.id));
-      setModalVisible(false);
-      Alert.alert("Sucesso", "Pet excluído com sucesso!");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Erro", "Não foi possível excluir o pet.");
-    }
-  };
-
-  // =========================
-  // Vacina - Edição
-  // =========================
-  const openVacinaModal = (v: Vacina) => {
-    setSelectedVacina(v);
-    setEditedNomeVacina(v.nome_vacina);
-    setEditedDataAplicacao(v.data_aplicacao?.split("T")[0] || "");
-    setEditedDataReforco(v.data_reforco?.split("T")[0] || "");
-    setEditedVeterinario(v.veterinario || "");
-    setVacinaModalVisible(true);
-  };
-
-  const saveVacinaChanges = async () => {
-    if (!selectedVacina) return;
-
-    try {
-      const res = await fetch(`${API_URL}/vacinas/${selectedVacina.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome_vacina: editedNomeVacina,
-          data_aplicacao: editedDataAplicacao,
-          data_reforco: editedDataReforco,
-          veterinario: editedVeterinario,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Erro ao atualizar vacina");
-
-      const updated = await res.json();
-
-      setVacinas((prev) =>
-        prev.map((v) => (v.id === updated.id ? updated : v))
-      );
-      setVacinaModalVisible(false);
-
-      Alert.alert("Sucesso", "Vacina atualizada com sucesso!");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Erro", "Não foi possível atualizar a vacina.");
-    }
-  };
-
-  const deleteVacina = async () => {
-    if (!selectedVacina) return;
-
-    try {
-      const response = await fetch(`${API_URL}/vacinas/${selectedVacina.id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        Alert.alert("Sucesso", "Vacina excluída com sucesso!");
-        setVacinas((prevVacinas) => prevVacinas.filter((v) => v.id !== selectedVacina.id));
-        setSelectedVacina(null);
-        setModalVisible(false);
-      } else {
-        Alert.alert("Erro", "Falha ao excluir a vacina. Tente novamente.");
-      }
-    } catch (error) {
-      console.error("Erro ao excluir vacina:", error);
-      Alert.alert("Erro", "Ocorreu um erro ao tentar excluir a vacina.");
-    }
-  };
-
-  // =========================
-  // JSX
-  // =========================
   return (
     <View style={{ flex: 1, backgroundColor: "#DDF3E0" }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -275,11 +173,15 @@ export default function Dashboard({ navigation }: Props) {
           <View style={styles.profileButton}>
             <Ionicons name="person-circle-outline" size={50} color="#4CAF50" />
           </View>
-          <Text style={styles.headerText}>Olá, {user?.name || user?.email || "Usuário"}</Text>
-          <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisible(true)}>
+          <Text style={styles.headerText}>
+            Olá, {user?.name || user?.email || "Usuário"}
+          </Text>
+          <TouchableOpacity style={styles.menuButton} onPress={openMenu}>
             <Ionicons name="menu-outline" size={30} color="#1B5E20" />
           </TouchableOpacity>
         </View>
+
+        {/* ... ----------- RESTO DO SEU DASHBOARD INALTERADO ----------- ... */}
 
         {/* Estatísticas */}
         <View style={styles.statsContainer}>
@@ -326,6 +228,7 @@ export default function Dashboard({ navigation }: Props) {
 
         {/* Lista de Pets */}
         <Text style={styles.sectionTitle}>Pets Recentes</Text>
+
         {loadingPets ? (
           <ActivityIndicator size="large" color="#4CAF50" />
         ) : recentPets.length === 0 ? (
@@ -351,6 +254,7 @@ export default function Dashboard({ navigation }: Props) {
 
         {/* Lista de Vacinas */}
         <Text style={styles.sectionTitle}>Vacinas Recentes</Text>
+
         {vacinas.length === 0 ? (
           <Text style={styles.noPetsText}>Nenhuma vacina encontrada.</Text>
         ) : (
@@ -360,13 +264,18 @@ export default function Dashboard({ navigation }: Props) {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.petItem}
-                onPress={() => openVacinaModal(item)}
+                onPress={() => {
+                  setSelectedVacina(item);
+                  setVacinaModalVisible(true);
+                }}
               >
                 <Text style={styles.petName}>{item.nome_vacina}</Text>
                 <Text>Pet: {item.pet?.nome}</Text>
                 <Text>
                   Próxima dose:{" "}
-                  {item.data_reforco ? new Date(item.data_reforco).toLocaleDateString("pt-BR") : "—"}
+                  {item.data_reforco
+                    ? new Date(item.data_reforco).toLocaleDateString("pt-BR")
+                    : "—"}
                 </Text>
               </TouchableOpacity>
             )}
@@ -374,8 +283,47 @@ export default function Dashboard({ navigation }: Props) {
         )}
       </ScrollView>
 
-      {/* Modais e menu permanecem iguais */}
-      {/* ... seu código de modais não precisa mudar, pois as funções já usam API_URL */}
+      {/* ============================================ */}
+      {/*      MENU LATERAL DESLIZANTE (CORRIGIDO)     */}
+      {/* ============================================ */}
+
+      <Modal transparent visible={menuVisible} animationType="none">
+        {/* Fundo escuro clicável */}
+        <Pressable style={styles.overlay} onPress={closeMenu} />
+
+        {/* Menu animado */}
+        <Animated.View
+          style={[
+            styles.sideMenu,
+            { transform: [{ translateX: slideAnim }] },
+          ]}
+        >
+          <Text style={styles.menuTitle}>Menu</Text>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              closeMenu();
+              navigation.navigate("TelaConfiguracao");
+            }}
+          >
+            <Ionicons name="settings-outline" size={22} color="#1B5E20" />
+            <Text style={styles.menuItemText}>Configurações</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={async () => {
+              closeMenu();
+              await signOut();
+              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+            }}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#1B5E20" />
+            <Text style={styles.menuItemText}>Sair</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
     </View>
   );
 }
@@ -385,32 +333,93 @@ export default function Dashboard({ navigation }: Props) {
 // =========================
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 80 },
-  headerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   profileButton: {},
   headerText: { fontSize: 22, fontWeight: "bold", color: "#1B5E20" },
   menuButton: {},
-  statsContainer: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap" },
-  statCard: { backgroundColor: "#FFF", borderRadius: 8, padding: 16, width: "48%", marginBottom: 8, alignItems: "center" },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    flexWrap: "wrap",
+  },
+  statCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    padding: 16,
+    width: "48%",
+    marginBottom: 8,
+    alignItems: "center",
+  },
   statValue: { fontSize: 20, fontWeight: "bold", color: "#1B5E20" },
   statLabel: { fontSize: 14, color: "#4CAF50" },
   actions: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
-  actionButton: { flex: 1, padding: 12, borderRadius: 8, marginHorizontal: 4, alignItems: "center" },
+  actionButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: "center",
+  },
   actionText: { color: "#FFF", fontWeight: "bold" },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", marginVertical: 8, color: "#1B5E20" },
-  petItem: { backgroundColor: "#FFF", padding: 12, borderRadius: 8, marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginVertical: 8,
+    color: "#1B5E20",
+  },
+  petItem: {
+    backgroundColor: "#FFF",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
   petName: { fontSize: 16, fontWeight: "bold", color: "#1B5E20" },
   petInfo: { fontSize: 14, color: "#555" },
   noPetsText: { color: "#555", fontStyle: "italic", marginBottom: 8 },
-  overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
-  petModal: { backgroundColor: "#FFF", padding: 20, borderRadius: 12, width: "90%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, color: "#1B5E20" },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-  modalButton: { padding: 10, borderRadius: 8, flex: 1, marginHorizontal: 4, alignItems: "center" },
-  modalButtonText: { color: "#FFF", fontWeight: "bold" },
-  input: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, padding: 8, marginVertical: 6 },
-  pickerContainer: { borderWidth: 1, borderColor: "#CCC", borderRadius: 8, marginVertical: 6 },
-  menuModal: { backgroundColor: "#FFF", padding: 20, borderRadius: 12, width: "80%" },
-  menuTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 16, color: "#1B5E20" },
-  menuItem: { flexDirection: "row", alignItems: "center", paddingVertical: 12 },
-  menuItemText: { fontSize: 16, marginLeft: 10, color: "#1B5E20" },
+
+  // Overlay escuro
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#00000088",
+  },
+
+  // Menu lateral
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 250,
+    backgroundColor: "#FFF",
+    padding: 20,
+    paddingTop: 60,
+    elevation: 20,
+  },
+
+  menuTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    color: "#1B5E20",
+  },
+
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  menuItemText: {
+    fontSize: 18,
+    marginLeft: 12,
+    color: "#1B5E20",
+  },
 });
