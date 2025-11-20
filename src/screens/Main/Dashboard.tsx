@@ -17,6 +17,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { AuthContext } from "../../contexts/AuthContext";
 import { API_URL } from "../../config/config";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 type Pet = {
   id: string;
@@ -109,7 +111,8 @@ export default function Dashboard({ navigation }: Props) {
   // =========================
   // Fetch Dashboard Data
   // =========================
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     const fetchDashboardData = async () => {
       try {
         if (!user?.id) return;
@@ -126,7 +129,7 @@ export default function Dashboard({ navigation }: Props) {
         const vacinasData: Vacina[] = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
         setVacinas(vacinasData);
 
-        // Estatísticas simples
+        // Estatísticas
         const today = new Date();
         const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -156,7 +159,9 @@ export default function Dashboard({ navigation }: Props) {
     };
 
     fetchDashboardData();
-  }, [user]);
+  }, [user])
+);
+
 
   // =========================
   // Logout
@@ -473,4 +478,12 @@ const styles = StyleSheet.create({
 
   detailText: { fontSize: 16, marginBottom: 8, color: "#333" },
   bold: { fontWeight: "bold", color: "#1B5E20" },
+
+
+
+
+
+
+
+  
 });
