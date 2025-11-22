@@ -232,33 +232,41 @@ export default function Dashboard({ navigation }: Props) {
   };
 
   // Deletar pet (DELETE /pets/:id)
-  const handleDeletePet = (pet: Pet) => {
-    Alert.alert(
-      "Excluir pet",
-      `Deseja realmente excluir "${pet.nome}"?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const res = await fetch(`${API_URL}/pets/${pet.id}`, {
-                method: "DELETE",
-              });
-              if (!res.ok) throw new Error("Erro ao excluir pet");
-              // atualizar lista
-              await fetchDashboardData();
-            } catch (error) {
-              console.error("Erro ao excluir pet:", error);
+ const handleDeletePet = (petId: string) => {
+   console.log("Clicou para deletar o pet com id:", petId);
+  Alert.alert(
+    "Excluir pet",
+    "Deseja realmente excluir este pet?",
+    [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const res = await fetch(`${API_URL}/pets/${petId}`, {
+              method: "DELETE",
+            });
+
+            if (!res.ok) {
               Alert.alert("Erro", "Não foi possível excluir o pet.");
+              return;
             }
-          },
+
+            // Atualiza o dashboard após excluir
+            await fetchDashboardData();
+          } catch (error) {
+            console.error("Erro ao excluir pet:", error);
+            Alert.alert("Erro", "Falha ao excluir o pet.");
+          }
         },
-      ],
-      { cancelable: true }
-    );
-  };
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
+
 
   // =========================
   // Vacina handlers (editar / deletar)
@@ -410,7 +418,7 @@ export default function Dashboard({ navigation }: Props) {
                     <Ionicons name="pencil-outline" size={20} color="#1B5E20" />
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={() => handleDeletePet(item)} style={styles.iconButton}>
+                  <TouchableOpacity onPress={() => handleDeletePet(item.id)} style={styles.iconButton}>
                     <Ionicons name="trash-outline" size={20} color="#B00020" />
                   </TouchableOpacity>
                 </View>
