@@ -12,6 +12,7 @@ import {
   Alert,
   Animated,
   Pressable,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
@@ -60,7 +61,6 @@ export default function Dashboard({ navigation }: Props) {
     overdueVaccines: 0,
   });
 
-  // Tipagem adicionada para evitar `never[]`
   const [recentPets, setRecentPets] = useState<Pet[]>([]);
   const [vacinas, setVacinas] = useState<Vacina[]>([]);
 
@@ -96,72 +96,77 @@ export default function Dashboard({ navigation }: Props) {
   const [selectedVacina, setSelectedVacina] = useState<Vacina | null>(null);
   const [vacinaModalVisible, setVacinaModalVisible] = useState(false);
 
-  // estados de edição (mantidos caso use depois)
-  const [editModalVisible, setEditModalVisible] = useState(false);
+  // estados de edição (modais específicos)
+  const [editPetModalVisible, setEditPetModalVisible] = useState(false);
   const [editedNome, setEditedNome] = useState("");
   const [editedTipo, setEditedTipo] = useState("Cachorro");
   const [editedSexo, setEditedSexo] = useState("Macho");
   const [editedPeso, setEditedPeso] = useState("");
 
+  const [editVacinaModalVisible, setEditVacinaModalVisible] = useState(false);
   const [editedNomeVacina, setEditedNomeVacina] = useState("");
   const [editedDataAplicacao, setEditedDataAplicacao] = useState("");
   const [editedDataReforco, setEditedDataReforco] = useState("");
   const [editedVeterinario, setEditedVeterinario] = useState("");
 
   // =========================
-  // Fetch Dashboard Data
+  // Fetch Dashboard Data (extraído para reutilizar)
   // =========================
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      if (!user?.id) return;
+
+      setLoadingPets(true);
+      setLoadingStats(true);
+
+      // Pets
+      const petsResponse = await fetch(`${API_URL}/pets/${user.id}`);
+      const petsDataRaw = await petsResponse.json();
+      const petsData: Pet[] = Array.isArray(petsDataRaw) ? petsDataRaw : [];
+      setRecentPets(petsData);
+
+      // Vacinas
+      const vacinasResponse = await fetch(`${API_URL}/vacinas/${user.id}`);
+      const vacinasDataRaw = await vacinasResponse.json();
+      const vacinasData: Vacina[] = Array.isArray(vacinasDataRaw)
+        ? vacinasDataRaw
+        : [];
+      setVacinas(vacinasData);
+
+      // Estatísticas
+      const today = new Date();
+      const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      let upcoming = 0;
+      let overdue = 0;
+
+      vacinasData.forEach((v) => {
+        if (v.data_reforco) {
+          const nextDose = new Date(v.data_reforco);
+          if (nextDose < today) overdue++;
+          else if (nextDose < in30Days) upcoming++;
+        }
+      });
+
+      setStats({
+        totalPets: petsData.length,
+        totalVaccines: vacinasData.length,
+        upcomingVaccines: upcoming,
+        overdueVaccines: overdue,
+      });
+    } catch (error) {
+      console.error("Erro ao carregar dados do dashboard:", error);
+    } finally {
+      setLoadingStats(false);
+      setLoadingPets(false);
+    }
+  }, [user]);
+
   useFocusEffect(
-  useCallback(() => {
-    const fetchDashboardData = async () => {
-      try {
-        if (!user?.id) return;
-
-        // Pets
-        const petsResponse = await fetch(`${API_URL}/pets/${user.id}`);
-        const petsDataRaw = await petsResponse.json();
-        const petsData: Pet[] = Array.isArray(petsDataRaw) ? petsDataRaw : [];
-        setRecentPets(petsData);
-
-        // Vacinas
-        const vacinasResponse = await fetch(`${API_URL}/vacinas/${user.id}`);
-        const vacinasDataRaw = await vacinasResponse.json();
-        const vacinasData: Vacina[] = Array.isArray(vacinasDataRaw) ? vacinasDataRaw : [];
-        setVacinas(vacinasData);
-
-        // Estatísticas
-        const today = new Date();
-        const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-        let upcoming = 0;
-        let overdue = 0;
-
-        vacinasData.forEach((v) => {
-          if (v.data_reforco) {
-            const nextDose = new Date(v.data_reforco);
-            if (nextDose < today) overdue++;
-            else if (nextDose < in30Days) upcoming++;
-          }
-        });
-
-        setStats({
-          totalPets: petsData.length,
-          totalVaccines: vacinasData.length,
-          upcomingVaccines: upcoming,
-          overdueVaccines: overdue,
-        });
-      } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
-      } finally {
-        setLoadingStats(false);
-        setLoadingPets(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [user])
-);
-
+    useCallback(() => {
+      fetchDashboardData();
+    }, [fetchDashboardData])
+  );
 
   // =========================
   // Logout
@@ -185,6 +190,140 @@ export default function Dashboard({ navigation }: Props) {
   const openVacinaModal = (v: Vacina) => {
     setSelectedVacina(v);
     setVacinaModalVisible(true);
+  };
+
+  // Abrir modal de edição de PET (pré-preenche campos)
+  const handleEditPet = (pet: Pet) => {
+    setSelectedPet(pet);
+    setEditedNome(pet.nome ?? "");
+    setEditedTipo(pet.tipo ?? "Cachorro");
+    setEditedSexo(pet.sexo ?? "Macho");
+    setEditedPeso(pet.peso !== undefined && pet.peso !== null ? String(pet.peso) : "");
+    setEditPetModalVisible(true);
+  };
+
+  // Salvar pet editado (PUT /pets/:id)
+  const saveEditedPet = async () => {
+    if (!selectedPet) return;
+    try {
+      const payload = {
+        nome: editedNome,
+        tipo: editedTipo,
+        sexo: editedSexo,
+        peso: editedPeso !== "" ? Number(editedPeso) : null,
+      };
+
+      const res = await fetch(`${API_URL}/pets/${selectedPet.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao atualizar pet");
+
+      setEditPetModalVisible(false);
+      setSelectedPet(null);
+      // atualizar lista
+      await fetchDashboardData();
+    } catch (error) {
+      console.error("Erro ao salvar pet:", error);
+      Alert.alert("Erro", "Não foi possível atualizar o pet.");
+    }
+  };
+
+  // Deletar pet (DELETE /pets/:id)
+  const handleDeletePet = (pet: Pet) => {
+    Alert.alert(
+      "Excluir pet",
+      `Deseja realmente excluir "${pet.nome}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await fetch(`${API_URL}/pets/${pet.id}`, {
+                method: "DELETE",
+              });
+              if (!res.ok) throw new Error("Erro ao excluir pet");
+              // atualizar lista
+              await fetchDashboardData();
+            } catch (error) {
+              console.error("Erro ao excluir pet:", error);
+              Alert.alert("Erro", "Não foi possível excluir o pet.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // =========================
+  // Vacina handlers (editar / deletar)
+  // =========================
+  const handleEditVacina = (v: Vacina) => {
+    setSelectedVacina(v);
+    setEditedNomeVacina(v.nome_vacina ?? "");
+    setEditedDataAplicacao(v.data_aplicacao ?? "");
+    setEditedDataReforco(v.data_reforco ?? "");
+    setEditedVeterinario(v.veterinario ?? "");
+    setEditVacinaModalVisible(true);
+  };
+
+  const saveEditedVacina = async () => {
+    if (!selectedVacina) return;
+    try {
+      const payload = {
+        nome_vacina: editedNomeVacina,
+        data_aplicacao: editedDataAplicacao || null,
+        data_reforco: editedDataReforco || null,
+        veterinario: editedVeterinario || null,
+      };
+
+      const res = await fetch(`${API_URL}/vacinas/${selectedVacina.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao atualizar vacina");
+
+      setEditVacinaModalVisible(false);
+      setSelectedVacina(null);
+      await fetchDashboardData();
+    } catch (error) {
+      console.error("Erro ao salvar vacina:", error);
+      Alert.alert("Erro", "Não foi possível atualizar a vacina.");
+    }
+  };
+
+  const handleDeleteVacina = (v: Vacina) => {
+    Alert.alert(
+      "Excluir vacina",
+      `Deseja realmente excluir "${v.nome_vacina}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await fetch(`${API_URL}/vacinas/${v.id}`, {
+                method: "DELETE",
+              });
+              if (!res.ok) throw new Error("Erro ao excluir vacina");
+              await fetchDashboardData();
+            } catch (error) {
+              console.error("Erro ao excluir vacina:", error);
+              Alert.alert("Erro", "Não foi possível excluir a vacina.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   // =========================
@@ -258,13 +397,24 @@ export default function Dashboard({ navigation }: Props) {
             data={recentPets}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.petItem}
-                onPress={() => openPetModal(item)}
-              >
-                <Text style={styles.petName}>{item.nome}</Text>
-                <Text style={styles.petInfo}>{item.tipo}</Text>
-              </TouchableOpacity>
+              <View style={styles.petItemRow}>
+                <TouchableOpacity style={styles.petItemInner} onPress={() => openPetModal(item)}>
+                  <View>
+                    <Text style={styles.petName}>{item.nome}</Text>
+                    <Text style={styles.petInfo}>{item.tipo}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.itemButtons}>
+                  <TouchableOpacity onPress={() => handleEditPet(item)} style={styles.iconButton}>
+                    <Ionicons name="pencil-outline" size={20} color="#1B5E20" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => handleDeletePet(item)} style={styles.iconButton}>
+                    <Ionicons name="trash-outline" size={20} color="#B00020" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
           />
         )}
@@ -278,19 +428,30 @@ export default function Dashboard({ navigation }: Props) {
             data={vacinas}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.petItem}
-                onPress={() => openVacinaModal(item)}
-              >
-                <Text style={styles.petName}>{item.nome_vacina}</Text>
-                <Text>Pet: {item.pet?.nome ?? "—"}</Text>
-                <Text>
-                  Próxima dose:{" "}
-                  {item.data_reforco
-                    ? new Date(item.data_reforco).toLocaleDateString("pt-BR")
-                    : "—"}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.petItemRow}>
+                <TouchableOpacity style={styles.petItemInner} onPress={() => openVacinaModal(item)}>
+                  <View>
+                    <Text style={styles.petName}>{item.nome_vacina}</Text>
+                    <Text>Pet: {item.pet?.nome ?? "—"}</Text>
+                    <Text>
+                      Próxima dose:{" "}
+                      {item.data_reforco
+                        ? new Date(item.data_reforco).toLocaleDateString("pt-BR")
+                        : "—"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.itemButtons}>
+                  <TouchableOpacity onPress={() => handleEditVacina(item)} style={styles.iconButton}>
+                    <Ionicons name="pencil-outline" size={20} color="#1B5E20" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => handleDeleteVacina(item)} style={styles.iconButton}>
+                    <Ionicons name="trash-outline" size={20} color="#B00020" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
           />
         )}
@@ -379,6 +540,65 @@ export default function Dashboard({ navigation }: Props) {
       </Modal>
 
       {/* =========================
+          MODAL: Editar PET
+         ========================= */}
+      <Modal visible={editPetModalVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.petModal}>
+            <Text style={styles.modalTitle}>Editar Pet</Text>
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Nome</Text>
+            <TextInput style={styles.input} value={editedNome} onChangeText={setEditedNome} />
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Tipo</Text>
+            <View style={styles.pickerContainer}>
+              <Picker selectedValue={editedTipo} onValueChange={(v) => setEditedTipo(v)}>
+                <Picker.Item label="Cachorro" value="Cachorro" />
+                <Picker.Item label="Gato" value="Gato" />
+                <Picker.Item label="Outro" value="Outro" />
+              </Picker>
+            </View>
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Sexo</Text>
+            <View style={styles.pickerContainer}>
+              <Picker selectedValue={editedSexo} onValueChange={(v) => setEditedSexo(v)}>
+                <Picker.Item label="Macho" value="Macho" />
+                <Picker.Item label="Fêmea" value="Fêmea" />
+                <Picker.Item label="Outro" value="Outro" />
+              </Picker>
+            </View>
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Peso (kg)</Text>
+            <TextInput
+              style={styles.input}
+              value={editedPeso}
+              keyboardType="numeric"
+              onChangeText={setEditedPeso}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#B00020" }]}
+                onPress={() => {
+                  setEditPetModalVisible(false);
+                  setSelectedPet(null);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
+                onPress={saveEditedPet}
+              >
+                <Text style={styles.modalButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* =========================
           MODAL: Detalhes da VACINA
          ========================= */}
       <Modal visible={vacinaModalVisible} transparent animationType="fade">
@@ -433,12 +653,54 @@ export default function Dashboard({ navigation }: Props) {
           </View>
         </View>
       </Modal>
+
+      {/* =========================
+          MODAL: Editar VACINA
+         ========================= */}
+      <Modal visible={editVacinaModalVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.petModal}>
+            <Text style={styles.modalTitle}>Editar Vacina</Text>
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Nome da Vacina</Text>
+            <TextInput style={styles.input} value={editedNomeVacina} onChangeText={setEditedNomeVacina} />
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Data de Aplicação (YYYY-MM-DD)</Text>
+            <TextInput style={styles.input} value={editedDataAplicacao} onChangeText={setEditedDataAplicacao} />
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Data de Reforço (YYYY-MM-DD)</Text>
+            <TextInput style={styles.input} value={editedDataReforco} onChangeText={setEditedDataReforco} />
+
+            <Text style={{ marginTop: 4, color: "#333" }}>Veterinário</Text>
+            <TextInput style={styles.input} value={editedVeterinario} onChangeText={setEditedVeterinario} />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#B00020" }]}
+                onPress={() => {
+                  setEditVacinaModalVisible(false);
+                  setSelectedVacina(null);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#4CAF50" }]}
+                onPress={saveEditedVacina}
+              >
+                <Text style={styles.modalButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 // =========================
-// Styles (mantive seu visual)
+// Styles (mantive seu visual + ajustes para botões)
 // =========================
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 80 },
@@ -454,9 +716,16 @@ const styles = StyleSheet.create({
   actionButton: { flex: 1, padding: 12, borderRadius: 8, marginHorizontal: 4, alignItems: "center" },
   actionText: { color: "#FFF", fontWeight: "bold" },
   sectionTitle: { fontSize: 18, fontWeight: "bold", marginVertical: 8, color: "#1B5E20" },
-  petItem: { backgroundColor: "#FFF", padding: 12, borderRadius: 8, marginBottom: 8 },
+
+  // card item row (texto + botões)
+  petItemRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#FFF", padding: 12, borderRadius: 8, marginBottom: 8 },
+  petItemInner: { flex: 1 },
   petName: { fontSize: 16, fontWeight: "bold", color: "#1B5E20" },
   petInfo: { fontSize: 14, color: "#555" },
+
+  itemButtons: { flexDirection: "row", marginLeft: 8 },
+  iconButton: { paddingHorizontal: 8, paddingVertical: 6 },
+
   noPetsText: { color: "#555", fontStyle: "italic", marginBottom: 8 },
 
   overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000088" },
@@ -478,12 +747,4 @@ const styles = StyleSheet.create({
 
   detailText: { fontSize: 16, marginBottom: 8, color: "#333" },
   bold: { fontWeight: "bold", color: "#1B5E20" },
-
-
-
-
-
-
-
-  
 });
