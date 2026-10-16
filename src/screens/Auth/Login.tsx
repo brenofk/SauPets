@@ -80,29 +80,15 @@ export default function Login() {
     if (!valid) return;
 
     try {
-      setLoading(true);
-
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
-      });
-
-      if (!response.ok) {
-        setLoginError("Usuário não encontrado.");
-        return;
-      }
-
-      // sucesso → faz o login normalmente
-      await signIn(email, senha);
-      
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      setLoginError("Falha de conexão com o servidor.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setLoading(true);
+    await signIn(email, senha);
+  } catch (error: any) {
+    console.error("Erro ao fazer login:", error);
+    setLoginError(error.message || "Falha de conexão com o servidor.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView

@@ -1,9 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL } from "../config/config"; // ajuste o caminho
+import { API_URL } from "../config/config";
 
-
-// 🔹 Adicionando telefone e cpf
 type User = {
   id: string;
   name: string;
@@ -14,6 +12,7 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
+  token: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -22,6 +21,7 @@ type AuthContextType = {
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
+  token: null,
   loading: true,
   signIn: async () => {},
   signOut: async () => {},
@@ -34,9 +34,9 @@ type AuthProviderProps = {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Função de login
   const signIn = async (email: string, password: string) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       const data = await response.json();
-      console.log("🔍 Resposta do backend:", data);
+      console.log("Resposta do backend:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Falha no login");
@@ -60,21 +60,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         cpf: data.cpf || undefined,
       };
 
+      const userToken = data.token; 
+
       setUser(userData);
+      setToken(userToken);
+      
       await AsyncStorage.setItem("@MyApp:user", JSON.stringify(userData));
+      if (userToken) {
+        await AsyncStorage.setItem("@MyApp:token", userToken);
+      }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       throw error;
     }
   };
 
-  // 🔹 Função de logout
   const signOut = async () => {
     setUser(null);
+    setToken(null);
     await AsyncStorage.removeItem("@MyApp:user");
+    await AsyncStorage.removeItem("@MyApp:token");
   };
 
-  // 🔹 Função para atualizar dados do usuário
   const updateUser = async (updatedFields: Partial<User>) => {
     if (!user) return;
     const updatedUser = { ...user, ...updatedFields };
@@ -82,32 +89,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await AsyncStorage.setItem("@MyApp:user", JSON.stringify(updatedUser));
   };
 
-  // 🔹 Carrega o usuário do AsyncStorage
   useEffect(() => {
-    const loadUser = async () => {
+    const loadStorageData = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("@MyApp:user");
+        const storedToken = await AsyncStorage.getItem("@MyApp:token");
+        
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
+        if (storedToken) {
+          setToken(storedToken);
+        }
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
+        console.error("Erro ao carregar dados do armazenamento:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
+    loadStorageData();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, token, loading, signIn, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 🔹 Hook personalizado
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
