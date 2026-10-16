@@ -16,21 +16,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../routes/AppRoutes";
 import { API_URL } from '../../config/config';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import { cores } from '../../estilos/cores';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -47,7 +33,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [senhaError, setSenhaError] = useState("");
-  const [loginError, setLoginError] = useState(""); // <-- novo estado para o erro geral
+  const [loginError, setLoginError] = useState("");
 
   const [fontsLoaded] = useFonts({
     Feather: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"),
@@ -56,7 +42,7 @@ export default function Login() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#2ecc71" />
+        <ActivityIndicator size="large" color={cores.verdePrincipal} />
       </View>
     );
   }
@@ -65,7 +51,7 @@ export default function Login() {
     let valid = true;
     setEmailError("");
     setSenhaError("");
-    setLoginError(""); // limpa o erro anterior
+    setLoginError("");
 
     if (email.trim() === "") {
       setEmailError("O email é obrigatório");
@@ -80,15 +66,15 @@ export default function Login() {
     if (!valid) return;
 
     try {
-    setLoading(true);
-    await signIn(email, senha);
-  } catch (error: any) {
-    console.error("Erro ao fazer login:", error);
-    setLoginError(error.message || "Falha de conexão com o servidor.");
-  } finally {
-    setLoading(false);
-  }
-};
+      setLoading(true);
+      await signIn(email, senha);
+    } catch (error: any) {
+      console.error("Erro ao fazer login:", error);
+      setLoginError(error.message || "Falha de conexão com o servidor.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -96,7 +82,7 @@ export default function Login() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.logoContainer}>
-        <Feather name="heart" size={50} color="#2ecc71" />
+        <Feather name="heart" size={50} color={cores.verdePrincipal} />
         <Text style={styles.appName}>SauPet</Text>
         <Text style={styles.subtitle}>
           Cuidado veterinário na palma da sua mão
@@ -137,14 +123,13 @@ export default function Login() {
             <Feather
               name={showPassword ? "eye-off" : "eye"}
               size={20}
-              color="#2ecc71"
+              color={cores.verdePrincipal}
               style={{ marginRight: 8 }}
             />
           </TouchableOpacity>
         </View>
         {senhaError ? <Text style={styles.errorText}>{senhaError}</Text> : null}
 
-        {/* Exibe erro geral (como "Usuário não encontrado") */}
         {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
 
         <TouchableOpacity>
@@ -157,7 +142,7 @@ export default function Login() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={cores.branco} />
           ) : (
             <Text style={styles.buttonText}>Entrar</Text>
           )}
@@ -180,7 +165,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fdf9",
+    backgroundColor: cores.fundoPrincipal,
     justifyContent: "center",
     padding: 20,
   },
@@ -190,10 +175,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logoContainer: { alignItems: "center", marginBottom: 30 },
-  appName: { fontSize: 26, fontWeight: "bold", color: "#333", marginTop: 10 },
-  subtitle: { fontSize: 14, color: "#666", textAlign: "center" },
+  appName: { fontSize: 26, fontWeight: "bold", color: cores.textoBase, marginTop: 10 },
+  subtitle: { fontSize: 14, color: cores.textoSecundario, textAlign: "center" },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: cores.branco,
     padding: 20,
     borderRadius: 16,
     shadowColor: "#000",
@@ -207,11 +192,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
     textAlign: "center",
-    color: "#222",
+    color: cores.textoBase,
   },
   description: {
     fontSize: 14,
-    color: "#777",
+    color: cores.textoSecundario,
     marginBottom: 16,
     textAlign: "center",
   },
@@ -219,31 +204,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: cores.borda,
     borderRadius: 12,
     marginBottom: 12,
     paddingHorizontal: 10,
   },
   icon: { marginRight: 8 },
-  input: { flex: 1, paddingVertical: 10, fontSize: 14, color: "#333" },
+  input: { flex: 1, paddingVertical: 10, fontSize: 14, color: cores.textoBase },
   forgotText: {
-    color: "#2ecc71",
+    color: cores.verdePrincipal,
     fontSize: 13,
     textAlign: "right",
     marginBottom: 16,
   },
   button: {
-    backgroundColor: "#2ecc71",
+    backgroundColor: cores.verdePrincipal,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
     marginBottom: 16,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  registerText: { fontSize: 14, textAlign: "center", color: "#555" },
-  registerLink: { color: "#2ecc71", fontWeight: "600" },
+  buttonText: { color: cores.branco, fontSize: 16, fontWeight: "600" },
+  registerText: { fontSize: 14, textAlign: "center", color: cores.textoSecundario },
+  registerLink: { color: cores.verdePrincipal, fontWeight: "600" },
   errorText: {
-    color: "red",
+    color: cores.erro,
     fontSize: 12,
     marginBottom: 8,
     marginLeft: 4,
