@@ -1,9 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView,
+  ActivityIndicator
+} from "react-native";
 import { API_URL } from '../../config/config';
-
-
-
 
 export default function Cadastro({ navigation }: any) {
   const [nome, setNome] = useState("");
@@ -12,79 +19,71 @@ export default function Cadastro({ navigation }: any) {
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
-  const [erro, setErro] = useState(false); // agora booleano para indicar erro de campos obrigatórios
+  const [erro, setErro] = useState(false);
   const [mensagemErro, setMensagemErro] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const validarSenha = (senha: string) => {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{6,}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$\%^&+=!]).{6,}$/;
     return regex.test(senha);
   };
 
   const handleCadastro = async () => {
-  setErro(false);
-  setMensagemErro("");
+    setErro(false);
+    setMensagemErro("");
 
-  if (!nome || !cpf || !email || !telefone || !senha || !confirmarSenha) {
-    setErro(true);
-    setMensagemErro("Todos os campos são obrigatórios.");
-    return;
-  }
-
-  if (!validarSenha(senha)) {
-    setErro(true);
-    setMensagemErro(
-      "A senha deve ter ao menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial."
-    );
-    return;
-  }
-
-  if (senha !== confirmarSenha) {
-    setErro(true);
-    setMensagemErro("As senhas não coincidem.");
-    return;
-  }
-
-  try {
-  
-  const response = await fetch(`${API_URL}/usuarios`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      nome,
-      cpf,
-      email,
-      telefone,
-      senha,
-    }),
-  });
-
-
-    if (response.ok) {
-      const data = await response.json();
-      alert(`🎉 Usuário cadastrado com sucesso! ID: ${data.id}`);
-
-      // Limpa os campos e redireciona, se quiser
-      setNome("");
-      setCpf("");
-      setEmail("");
-      setTelefone("");
-      setSenha("");
-      setConfirmarSenha("");
-      navigation.navigate("Login");
-    } else {
-      const errorData = await response.json();
-      alert(`❌ Erro: ${errorData.error || "Falha ao cadastrar usuário"}`);
+    if (!nome || !cpf || !email || !telefone || !senha || !confirmarSenha) {
+      setErro(true);
+      setMensagemErro("Todos os campos são obrigatórios.");
+      return;
     }
-  } catch (error) {
-    console.error(error);
-    alert("⚠️ Erro de conexão com o servidor.");
-  }
-};
 
+    if (!validarSenha(senha)) {
+      setErro(true);
+      setMensagemErro(
+        "A palavra-passe deve ter ao menos 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial."
+      );
+      return;
+    }
 
-  // Função para retornar estilo de input
+    if (senha !== confirmarSenha) {
+      setErro(true);
+      setMensagemErro("As palavras-passe não coincidem.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/usuarios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nome, cpf, email, telefone, senha }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`🎉 Utilizador registado com sucesso! ID: ${data.id}`);
+        setNome("");
+        setCpf("");
+        setEmail("");
+        setTelefone("");
+        setSenha("");
+        setConfirmarSenha("");
+        navigation.navigate("Login");
+      } else {
+        const errorData = await response.json();
+        alert(`❌ Erro: ${errorData.error || "Falha ao registar utilizador"}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("⚠️ Erro de ligação com o servidor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const estiloInput = (campo: string) => {
     if (!erro) return styles.input;
     if (!campo) return { ...styles.input, borderColor: "red" };
@@ -92,75 +91,91 @@ export default function Cadastro({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Criar Conta</Text>
-      <Text style={styles.subtitle}>Preencha seus dados para começar</Text>
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: "#f9fdf9" }} 
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <Text style={styles.title}>Criar Conta</Text>
+          <Text style={styles.subtitle}>Preencha os seus dados para começar</Text>
 
-      <TextInput
-        style={estiloInput(nome)}
-        placeholder="Seu nome completo"
-        value={nome}
-        onChangeText={setNome}
-      />
+          <TextInput
+            style={estiloInput(nome)}
+            placeholder="O seu nome completo"
+            value={nome}
+            onChangeText={setNome}
+          />
 
-      <TextInput
-        style={estiloInput(cpf)}
-        placeholder="000.000.000-00"
-        value={cpf}
-        onChangeText={setCpf}
-        keyboardType="numeric"
-      />
+          <TextInput
+            style={estiloInput(cpf)}
+            placeholder="000.000.000-00"
+            value={cpf}
+            onChangeText={setCpf}
+            keyboardType="numeric"
+          />
 
-      <TextInput
-        style={estiloInput(email)}
-        placeholder="seu@email.com"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
+          <TextInput
+            style={estiloInput(email)}
+            placeholder="seu@email.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-      <TextInput
-        style={estiloInput(telefone)}
-        placeholder="(00) 00000-0000"
-        value={telefone}
-        onChangeText={setTelefone}
-        keyboardType="phone-pad"
-      />
+          <TextInput
+            style={estiloInput(telefone)}
+            placeholder="(00) 00000-0000"
+            value={telefone}
+            onChangeText={setTelefone}
+            keyboardType="phone-pad"
+          />
 
-      <TextInput
-        style={estiloInput(senha)}
-        placeholder="Mínimo 6 caracteres"
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+          <TextInput
+            style={estiloInput(senha)}
+            placeholder="Mínimo de 6 caracteres"
+            secureTextEntry
+            value={senha}
+            onChangeText={setSenha}
+          />
 
-      <TextInput
-        style={estiloInput(confirmarSenha)}
-        placeholder="Confirme sua senha"
-        secureTextEntry
-        value={confirmarSenha}
-        onChangeText={setConfirmarSenha}
-      />
+          <TextInput
+            style={estiloInput(confirmarSenha)}
+            placeholder="Confirme a sua palavra-passe"
+            secureTextEntry
+            value={confirmarSenha}
+            onChangeText={setConfirmarSenha}
+          />
 
-      {mensagemErro ? <Text style={styles.erro}>{mensagemErro}</Text> : null}
+          {mensagemErro ? <Text style={styles.erro}>{mensagemErro}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleCadastro}>
-        <Text style={styles.buttonText}>Criar Conta</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleCadastro} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Criar Conta</Text>
+            )}
+          </TouchableOpacity>
 
-      <Text style={styles.loginText}>
-        Já tem uma conta?{" "}
-        <Text style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
-          Entrar
-        </Text>
-      </Text>
-    </View>
+          <Text style={styles.loginText}>
+            Já tem uma conta?{" "}
+            <Text style={styles.loginLink} onPress={() => navigation.navigate("Login")}>
+              Entrar
+            </Text>
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#f9fdf9" },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  container: { padding: 20 },
   title: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 5 },
   subtitle: { textAlign: "center", marginBottom: 20, color: "#666" },
   input: {
