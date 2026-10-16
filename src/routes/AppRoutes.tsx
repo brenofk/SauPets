@@ -1,8 +1,8 @@
-// AppRoutes.tsx
 import React, { useContext } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthContext } from "../contexts/AuthContext";
+import { cores } from "../estilos/cores";
 
 // Telas
 import Login from "../screens/Auth/Login";
@@ -32,7 +32,7 @@ export default function AppRoutes() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color={cores.verdePrincipal} />
       </View>
     );
   }
@@ -40,7 +40,7 @@ export default function AppRoutes() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        // 🔹 Usuário logado → mostra telas internas
+        // Usuário logado → mostra telas internas
         <>
           <Stack.Screen name="Dashboard" component={Dashboard} />
           <Stack.Screen name="TelaConfiguracao" component={TelaConfiguracao} />
@@ -49,7 +49,7 @@ export default function AppRoutes() {
           <Stack.Screen name="TelaCadastroVacinas" component={TelaCadastroVacinas} />
         </>
       ) : (
-        // 🔹 Usuário deslogado → apenas Login/Cadastro
+        // Usuário deslogado → apenas Login/Cadastro
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Cadastro" component={Cadastro} />
@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#DDF3E0",
+    backgroundColor: cores.fundoSecundario,
   },
 });
