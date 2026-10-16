@@ -95,7 +95,7 @@ export default function Login() {
           Acesse sua conta para cuidar dos seus pets
         </Text>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, emailError ? { borderColor: cores.erro } : null]}>
           <Feather name="mail" size={20} color="#888" style={styles.icon} />
           <TextInput
             style={styles.input}
@@ -109,7 +109,7 @@ export default function Login() {
         </View>
         {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, senhaError ? { borderColor: cores.erro } : null]}>
           <Feather name="lock" size={20} color="#888" style={styles.icon} />
           <TextInput
             style={styles.input}
